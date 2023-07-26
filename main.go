@@ -1,112 +1,104 @@
 /*
  */
-// MAPS : NESTED
+// Advanced Functions : FIRST CLASS AND HIGHER ORDER FUNCTIONS
 
-// NESTED
-// Maps can contain maps, creating a nested structure. For example:
+// FIRST CLASS AND HIGHER ORDER FUNCTIONS
+// A programming language is said to have "first-class functions" when functions in that language are treated like any
+// other variable. For example, in such a language, a function can be passed as an argument to other functions, can be
+// returned by another function and can be assigned as a value to a variable.
+
+// A function that returns a function or accepts a function as input is called a Higher-Order Function.
+
+// Go supports first-class and higher-order functions. Another way to think of this is that a function is just another
+// type -- just like ints and strings and bools.
+
+// For example, to accept a function as a parameter:
 /*
-	map[string]map[string]int
-	map[rune]map[string]int
-	map[int]map[string]map[string]int
+	func add(x, y int) int {
+		return x + y
+	}
+
+	func mul(x, y int) int {
+		return x * y
+	}
+
+	// aggregate applies the given math function to the first 3 inputs
+	func aggregate(a, b, c int, arithmetic func(int, int) int) int {
+		return arithmetic(arithmetic(a, b), c)
+	}
+
+	func main(){
+		fmt.Println(aggregate(2,3,4, add))
+		// prints 9
+		fmt.Println(aggregate(2,3,4, mul))
+		// prints 24
+	}
 */
 
 // ASSIGNMENT
-// Because Textio is a glorified customer database, we have a lot of internal logic for sorting and dealing with customer names.
+// Textio is launching a new email messaging product, "Mailio"!
 
-// Complete the getNameCounts function. It takes a slice of strings (names) and returns a nested map where the first key is all
-// the unique first characters of the names, the second key is all the names themselves, and the value is the count of each name.
-
-// For example:
-/*
-	billy
-	billy
-	bob
-	joe
-*/
-
-// Creates the following nested map:
-/*
-	b: {
-		billy: 2,
-		bob: 1
-	},
-	j: {
-		joe: 1
-	}
-*/
-// Note that the test suite is not printing the map you're returning directly, but instead checking some specific keys.
+// Fix the compile-time bug in the getFormattedMessages function. The function body is correct, but the function signature is not.
 
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
-func getNameCounts(names []string) map[rune]map[string]int {
-	counts := make(map[rune]map[string]int)
-	for _, name := range names {
-		if name == "" {
-			continue
-		}
-		firstChar := rune(name[0])
-		_, ok := counts[firstChar]
-		if !ok {
-			counts[firstChar] = make(map[string]int)
-		}
-		counts[firstChar][name]++
-
+func getFormattedMessages(messages []string, formatter func(string) string) []string {
+	formattedMessages := []string{}
+	for _, message := range messages {
+		formattedMessages = append(formattedMessages, formatter(message))
 	}
-	// fmt.Println(counts)
-	return counts
+	return formattedMessages
 }
 
-// don't edit below this line
+// don't touch below this line
 
-func test(names []string, initial rune, name string) {
-	fmt.Printf("Generating counts for %v names...\n", len(names))
+func addSignature(message string) string {
+	return message + " Kind regards."
+}
 
-	nameCounts := getNameCounts(names)
-	count := nameCounts[initial][name]
-	fmt.Printf("Count for [%c][%s]: %d\n", initial, name, count)
-	fmt.Println("=====================================")
+func addGreeting(message string) string {
+	return "Hello! " + message
+}
+
+func test(messages []string, formatter func(string) string) {
+	defer fmt.Println("====================================")
+	formattedMessages := getFormattedMessages(messages, formatter)
+	if len(formattedMessages) != len(messages) {
+		fmt.Println("The number of messages returned is incorrect.")
+		return
+	}
+	for i, message := range messages {
+		formatted := formattedMessages[i]
+		fmt.Printf(" * %s -> %s\n", message, formatted)
+	}
 }
 
 func main() {
-	test(getNames(50), 'M', "Matthew")
-	test(getNames(100), 'G', "George")
-	test(getNames(150), 'D', "Drew")
-	test(getNames(200), 'P', "Philip")
-	test(getNames(250), 'B', "Bryant")
-	test(getNames(300), 'M', "Matthew")
-}
-
-func getNames(length int) []string {
-	names := []string{
-		"Grant", "Eduardo", "Peter", "Matthew", "Matthew", "Matthew", "Peter", "Peter", "Henry", "Parker", "Parker", "Parker", "Collin", "Hayden", "George", "Bradley", "Mitchell", "Devon", "Ricardo", "Shawn", "Taylor", "Nicolas", "Gregory", "Francisco", "Liam", "Kaleb", "Preston", "Erik", "Alexis", "Owen", "Omar", "Diego", "Dustin", "Corey", "Fernando", "Clayton", "Carter", "Ivan", "Jaden", "Javier", "Alec", "Johnathan", "Scott", "Manuel", "Cristian", "Alan", "Raymond", "Brett", "Max", "Drew", "Andres", "Gage", "Mario", "Dawson", "Dillon", "Cesar", "Wesley", "Levi", "Jakob", "Chandler", "Martin", "Malik", "Edgar", "Sergio", "Trenton", "Josiah", "Nolan", "Marco", "Drew", "Peyton", "Harrison", "Drew", "Hector", "Micah", "Roberto", "Drew", "Brady", "Erick", "Conner", "Jonah", "Casey", "Jayden", "Edwin", "Emmanuel", "Andre", "Phillip", "Brayden", "Landon", "Giovanni", "Bailey", "Ronald", "Braden", "Damian", "Donovan", "Ruben", "Frank", "Gerardo", "Pedro", "Andy", "Chance", "Abraham", "Calvin", "Trey", "Cade", "Donald", "Derrick", "Payton", "Darius", "Enrique", "Keith", "Raul", "Jaylen", "Troy", "Jonathon", "Cory", "Marc", "Eli", "Skyler", "Rafael", "Trent", "Griffin", "Colby", "Johnny", "Chad", "Armando", "Kobe", "Caden", "Marcos", "Cooper", "Elias", "Brenden", "Israel", "Avery", "Zane", "Zane", "Zane", "Zane", "Dante", "Josue", "Zackary", "Allen", "Philip", "Mathew", "Dennis", "Leonardo", "Ashton", "Philip", "Philip", "Philip", "Julio", "Miles", "Damien", "Ty", "Gustavo", "Drake", "Jaime", "Simon", "Jerry", "Curtis", "Kameron", "Lance", "Brock", "Bryson", "Alberto", "Dominick", "Jimmy", "Kaden", "Douglas", "Gary", "Brennan", "Zachery", "Randy", "Louis", "Larry", "Nickolas", "Albert", "Tony", "Fabian", "Keegan", "Saul", "Danny", "Tucker", "Myles", "Damon", "Arturo", "Corbin", "Deandre", "Ricky", "Kristopher", "Lane", "Pablo", "Darren", "Jarrett", "Zion", "Alfredo", "Micheal", "Angelo", "Carl", "Oliver", "Kyler", "Tommy", "Walter", "Dallas", "Jace", "Quinn", "Theodore", "Grayson", "Lorenzo", "Joe", "Arthur", "Bryant", "Roman", "Brent", "Russell", "Ramon", "Lawrence", "Moises", "Aiden", "Quentin", "Jay", "Tyrese", "Tristen", "Emanuel", "Salvador", "Terry", "Morgan", "Jeffery", "Esteban", "Tyson", "Braxton", "Branden", "Marvin", "Brody", "Craig", "Ismael", "Rodney", "Isiah", "Marshall", "Maurice", "Ernesto", "Emilio", "Brendon", "Kody", "Eddie", "Malachi", "Abel", "Keaton", "Jon", "Shaun", "Skylar", "Ezekiel", "Nikolas", "Santiago", "Kendall", "Axel", "Camden", "Trevon", "Bobby", "Conor", "Jamal", "Lukas", "Malcolm", "Zackery", "Jayson", "Javon", "Roger", "Reginald", "Zachariah", "Desmond", "Felix", "Johnathon", "Dean", "Quinton", "Ali", "Davis", "Gerald", "Rodrigo", "Demetrius", "Billy", "Rene", "Reece", "Kelvin", "Leo", "Justice", "Chris", "Guillermo", "Matthew", "Matthew", "Matthew", "Kevon", "Steve", "Frederick", "Clay", "Weston", "Dorian", "Hugo", "Roy", "Orlando", "Terrance", "Kai", "Khalil", "Khalil", "Khalil", "Graham", "Noel", "Willie", "Nathanael", "Terrell", "Tyrone",
-	}
-	if length > len(names) {
-		length = len(names)
-	}
-	return names[:length]
+	test([]string{
+		"Thanks for getting back to me.",
+		"Great to see you again.",
+		"I would love to hang out this weekend.",
+		"Got any hot stock tips?",
+	}, addSignature)
+	test([]string{
+		"Thanks for getting back to me.",
+		"Great to see you again.",
+		"I would love to hang out this weekend.",
+		"Got any hot stock tips?",
+	}, addGreeting)
 }
 
 // RESULTS:
 
-// Generating counts for 50 names...
-// Count for [M][Matthew]: 3
-// =====================================
-// Generating counts for 100 names...
-// Count for [G][George]: 1
-// =====================================
-// Generating counts for 150 names...
-// Count for [D][Drew]: 4
-// =====================================
-// Generating counts for 200 names...
-// Count for [P][Philip]: 4
-// =====================================
-// Generating counts for 250 names...
-// Count for [B][Bryant]: 1
-// =====================================
-// Generating counts for 300 names...
-// Count for [M][Matthew]: 6
-// =====================================
+// * Thanks for getting back to me. -> Thanks for getting back to me. Kind regards.
+// * Great to see you again. -> Great to see you again. Kind regards.
+// * I would love to hang out this weekend. -> I would love to hang out this weekend. Kind regards.
+// * Got any hot stock tips? -> Got any hot stock tips? Kind regards.
+// ====================================
+// * Thanks for getting back to me. -> Hello! Thanks for getting back to me.
+// * Great to see you again. -> Hello! Great to see you again.
+// * I would love to hang out this weekend. -> Hello! I would love to hang out this weekend.
+// * Got any hot stock tips? -> Hello! Got any hot stock tips?
+// ====================================
