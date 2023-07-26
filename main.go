@@ -1,89 +1,81 @@
 /*
  */
-// Channels : CHANNELS
+// Channels : BUFFERED CHANNELS
 
-// [CHANNELS]
-// Empty structs are often used as tokens in Go programs. In this context, a token
-// is a unary value. In other words, we don't care what is passed through the channel.
-// We care when and if it is passed.
+// [BUFFERED CHANNELS]
+// Channels can optionally be buffered.
 
-// We can block and wait until something is sent on a channel using the following syntax
-/*
-	<-ch
-*/
-// This will block until it pops a single item off the channel, then continue, discarding
-// the item.
+// [CREATING A CHANNEL WITH A BUFFER]
+// You can provide a buffer length as the second argument to make() to create a
+// buffered channel:
+
+// ch := make(chan int, 100)
+// Sending on a buffered channel only blocks when the buffer is full.
+
+// Receiving blocks only when the buffer is empty.
 
 // ASSIGNMENT
-// Our Mailio server isn't able to boot up until it receives the signal that its databases
-// are all online, and it learns about them being online by waiting for tokens (empty structs)
-// on a channel.
+// We want to be able to send emails in batches. A writing goroutine will write an
+// entire batch of email messages to a buffered channel, and later, once the channel
+// is full, a reading goroutine will read all of the messages from the channel and
+// send them out to our clients.
 
-// Complete the waitForDbs function. It should block until it receives numDBs tokens on the
-// dbChan channel. Each time it reads a token the getDatabasesChannel goroutine will print
-// a message to the console for you.
+// Complete the addEmailsToQueue function. It should create a buffered channel with a
+// buffer large enough to store all of the emails it's given. It should then write the
+// emails to the channel in order, and finally return the channel.
 
 package main
 
-import (
-	"fmt"
-	"time"
-)
+import "fmt"
 
-func waitForDbs(numDBs int, dbChan chan struct{}) {
-	for i := 0; i < numDBs; i++ {
-		<-dbChan
+func addEmailsToQueue(emails []string) chan string {
+	emailsToSend := make(chan string, len(emails))
+	for _, email := range emails {
+		emailsToSend <- email
+	}
+	return emailsToSend
+}
+
+// TEST SUITE - Don't Touch Below This Line
+
+func sendEmails(batchSize int, ch chan string) {
+	for i := 0; i < batchSize; i++ {
+		email := <-ch
+		fmt.Println("Sending email:", email)
 	}
 }
 
-// don't touch below this line
-
-func test(numDBs int) {
-	dbChan := getDatabasesChannel(numDBs)
-	fmt.Printf("Waiting for %v databases...\n", numDBs)
-	waitForDbs(numDBs, dbChan)
-	time.Sleep(time.Millisecond * 10) // ensure the last print statement happens
-	fmt.Println("All databases are online!")
-	fmt.Println("=====================================")
+func test(emails ...string) {
+	fmt.Printf("Adding %v emails to queue...\n", len(emails))
+	ch := addEmailsToQueue(emails)
+	fmt.Println("Sending emails...")
+	sendEmails(len(emails), ch)
+	fmt.Println("==========================================")
 }
 
 func main() {
-	test(3)
-	test(4)
-	test(5)
-}
-
-func getDatabasesChannel(numDBs int) chan struct{} {
-	ch := make(chan struct{})
-	go func() {
-		for i := 0; i < numDBs; i++ {
-			ch <- struct{}{}
-			fmt.Printf("Database %v is online\n", i+1)
-		}
-	}()
-	return ch
+	test("Hello John, tell Kathy I said hi", "Whazzup bruther")
+	test("I find that hard to believe.", "When? I don't know if I can", "What time are you thinking?")
+	test("She says hi!", "Yeah its tomorrow. So we're good.", "Cool see you then!", "Bye!")
 }
 
 // RESULTS:
 
-// Waiting for 3 databases...
-// Database 1 is online
-// Database 2 is online
-// Database 3 is online
-// All databases are online!
-// =====================================
-// Waiting for 4 databases...
-// Database 1 is online
-// Database 2 is online
-// Database 3 is online
-// Database 4 is online
-// All databases are online!
-// =====================================
-// Waiting for 5 databases...
-// Database 1 is online
-// Database 2 is online
-// Database 3 is online
-// Database 4 is online
-// Database 5 is online
-// All databases are online!
-// =====================================
+// Adding 2 emails to queue...
+// Sending emails...
+// Sending email: Hello John, tell Kathy I said hi
+// Sending email: Whazzup bruther
+// ==========================================
+// Adding 3 emails to queue...
+// Sending emails...
+// Sending email: I find that hard to believe.
+// Sending email: When? I don't know if I can
+// Sending email: What time are you thinking?
+// ==========================================
+// Adding 4 emails to queue...
+// Sending emails...
+// Sending email: She says hi!
+// Sending email: Yeah its tomorrow. So we're good.
+// Sending email: Cool see you then!
+// Sending email: Bye!
+// ==========================================
