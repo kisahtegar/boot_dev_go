@@ -1,35 +1,25 @@
-// Errors : THE ERROR INTERFACE
+// Errors : THE ERROR PACKAGE
 
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
-type divideError struct {
-	dividend float64
-}
-
-func (de divideError) Error() string {
-	return fmt.Sprintf("can not divide %v by zero", de.dividend)
+func divide(x, y float64) (float64, error) {
+	if y == 0 {
+		return 0.0, errors.New("No dividing by zero")
+	}
+	return x / y, nil
 }
 
 // don't edit below this line
 
-func divide(dividend, divisor float64) (float64, error) {
-	if divisor == 0 {
-		// We convert the `divideError` struct to an `error` type by returning it
-		// as an error. As an error type, when it's printed its default value
-		// will be the result of the Error() method
-		return 0, divideError{dividend: dividend}
-	}
-	return dividend / divisor, nil
-}
-
-func test(dividend, divisor float64) {
+func test(x, y float64) {
 	defer fmt.Println("====================================")
-	fmt.Printf("Dividing %.2f by %.2f ...\n", dividend, divisor)
-	quotient, err := divide(dividend, divisor)
+	fmt.Printf("Dividing %.2f by %.2f ...\n", x, y)
+	quotient, err := divide(x, y)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -45,9 +35,9 @@ func main() {
 }
 
 // RESULTS:
-//
+
 // Dividing 10.00 by 0.00 ...
-// can not divide 10 by zero
+// No dividing by zero
 // ====================================
 // Dividing 10.00 by 2.00 ...
 // Quotient: 5.00
