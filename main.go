@@ -1,25 +1,44 @@
-// Slices : ARRAYS IN GO
+// Slices : SLICES IN GO
+
+// Slices always have an underlying array, though it isn't always specified explicitly.
+// arrayname[lowIndex:highIndex]
+// arrayname[lowIndex:]
+// arrayname[:highIndex]
+// arrayname[:]
 
 // ASSIGNMENT
-// When a message isn't responded to, we allow our clients to have up to 2 additional messages that are sent as nudging reminders.
+// Retries are a premium feature now! Textio's free users only get 1 retry message, while pro members get an unlimited amount.
 
-// getMessageWithRetries returns an array of 3 strings where index 0 is the first message. If the first message isn't answered by the recipient, we send the second, if that one isn't answered then we send the third.
+// Complete the getMessageWithRetriesForPlan function. It takes a plan variable as input, and you've been provided with constants for the plan types at the top of the program.
 
-// Update getMessageWithRetries to return the following 3 strings in an array.
-
-// click here to sign up
-// pretty please click here
-// we beg you to sign up
+// - If the plan is a pro plan, return all the strings from getMessageWithRetries().
+// - If the plan is a free plan, return the first 2 strings from getMessageWithRetries().
+// - If the plan isn't either of those, return an error that says unsupported plan.
 
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
-	retry1 = "click here to sign up"
-	retry2 = "pretty please click here"
-	retry3 = "we beg you to sign up"
+	planFree = "free"
+	planPro  = "pro"
 )
+
+func getMessageWithRetriesForPlan(plan string) ([]string, error) {
+	allMessages := getMessageWithRetries()
+	if plan == planPro {
+		return allMessages[:], nil
+	}
+	if plan == planFree {
+		return allMessages[0:2], nil
+	}
+	return nil, errors.New("unsupported plan")
+}
+
+// don't touch below this line
 
 func getMessageWithRetries() [3]string {
 	return [3]string{
@@ -29,13 +48,16 @@ func getMessageWithRetries() [3]string {
 	}
 }
 
-// don't touch below this line
-
-func testSend(name string, doneAt int) {
+func test(name string, doneAt int, plan string) {
+	defer fmt.Println("=====================================")
 	fmt.Printf("sending to %v...", name)
 	fmt.Println()
 
-	messages := getMessageWithRetries()
+	messages, err := getMessageWithRetriesForPlan(plan)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 	for i := 0; i < len(messages); i++ {
 		msg := messages[i]
 		fmt.Printf(`sending: "%v"`, msg)
@@ -45,34 +67,37 @@ func testSend(name string, doneAt int) {
 			break
 		}
 		if i == len(messages)-1 {
-			fmt.Println("complete failure")
+			fmt.Println("no response")
 		}
 	}
 }
 
 func main() {
-	testSend("Bob", 0)
-	testSend("Alice", 1)
-	testSend("Mangalam", 2)
-	testSend("Ozgur", 3)
+	test("Ozgur", 3, planFree)
+	test("Jeff", 3, planPro)
+	test("Sally", 2, planPro)
+	test("Sally", 3, "no plan")
 }
 
 // RESULTS:
 
-// sending to Bob...
-// sending: "click here to sign up"
-// they responded!
-// sending to Alice...
-// sending: "click here to sign up"
-// sending: "pretty please click here"
-// they responded!
-// sending to Mangalam...
-// sending: "click here to sign up"
-// sending: "pretty please click here"
-// sending: "we beg you to sign up"
-// they responded!
 // sending to Ozgur...
 // sending: "click here to sign up"
 // sending: "pretty please click here"
+// no response
+// =====================================
+// sending to Jeff...
+// sending: "click here to sign up"
+// sending: "pretty please click here"
 // sending: "we beg you to sign up"
-// complete failure
+// no response
+// =====================================
+// sending to Sally...
+// sending: "click here to sign up"
+// sending: "pretty please click here"
+// sending: "we beg you to sign up"
+// they responded!
+// =====================================
+// sending to Sally...
+// Error: unsupported plan
+// =====================================
