@@ -1,66 +1,60 @@
-// Loops : THERE IS NO WHILE LOOP IN GO
+// Loops : FIZZBUZZ
 
 // ASSIGNMENT
-// We have an interesting new cost structure from our SMS vendor. They charge exponentially
-// more money for each consecutive text we send! Let's write a function that can calculate
-// how many messages we can send in a given batch given a costMultiplier and a maxCostInPennies.
+// We're hiring engineers at Textio, so time to brush up on the classic "Fizzbuzz" game,
+// a coding exercise that has been dramatically overused in coding interviews across the world.
 
-// In a nutshell, the first message costs a penny, and each message after that costs the same
-// as the previous message multiplied by the costMultiplier. That gets expensive!
-
-// There is an infinite loop in the code! Add a condition to the for loop to fix the bug. The
-// loop should break as soon as the actualCostInPennies is greater than the maxCostInPennies.
+// Complete the fizzbuzz function that prints the numbers 1 to 100 inclusive each on their own line,
+// but substitutes multiples of 3 for the text fizz and multiples of 5 for buzz. For multiples of 3 AND 5 print instead fizzbuzz.
 
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
-func getMaxMessagesToSend(costMultiplier float64, maxCostInPennies int) int {
-	actualCostInPennies := 1.0
-	maxMessagesToSend := 0
-	for actualCostInPennies <= float64(maxCostInPennies) {
-		actualCostInPennies *= costMultiplier
-		maxMessagesToSend++
+func fizzbuzz() {
+	for i := 1; i < 100; i++ {
+		if i%3 == 0 && i%5 == 0 {
+			fmt.Println("fizzbuzz")
+		} else if i%3 == 0 {
+			fmt.Println("fizz")
+		} else if i%5 == 0 {
+			fmt.Println("buzz")
+		} else {
+			fmt.Println(i)
+		}
 	}
-
-	return maxMessagesToSend
 }
 
 // don't touch below this line
 
-func test(costMultiplier float64, maxCostInPennies int) {
-	maxMessagesToSend := getMaxMessagesToSend(costMultiplier, maxCostInPennies)
-	fmt.Printf("Multiplier: %v\n",
-		costMultiplier,
-	)
-	fmt.Printf("Max cost: %v\n",
-		maxCostInPennies,
-	)
-	fmt.Printf("Max messages you can send: %v\n",
-		maxMessagesToSend,
-	)
-	fmt.Println("====================================")
-}
-
 func main() {
-	test(1.1, 5)
-	test(1.3, 10)
-	test(1.35, 25)
+	fizzbuzz()
 }
 
 // RESULTS:
 
-// Multiplier: 1.1
-// Max cost: 5
-// Max messages you can send: 17
-// ====================================
-// Multiplier: 1.3
-// Max cost: 10
-// Max messages you can send: 9
-// ====================================
-// Multiplier: 1.35
-// Max cost: 25
-// Max messages you can send: 11
-// ====================================
+// 1
+// 2
+// fizz
+// 4
+// buzz
+// fizz
+// 7
+// 8
+// fizz
+// buzz
+// 11
+// fizz
+// 13
+// 14
+// fizzbuzz
+// 16
+// 17
+// fizz
+// 19
+// buzz
+// fizz
+// 22
+// 23
+// fizz
+// ....
