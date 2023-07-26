@@ -1,131 +1,88 @@
 /*
  */
-// MAPS : MUTATIONS
+// MAPS : INSTANCES
 
-// MUTATIONS
+// COUNT INSTANCES
+// Remember that you can check if a key is already present in a map by using the second return value from the index operation.
 /*
-	// INSERT AN ELEMENT
-	m[key] = elem
-	// GET AN ELEMENT
-	elem = m[key]
-	// DELETE AN ELEMENT
-	delete(m, key)
-	// CHECK IF A KEY EXISTS
-	elem, ok := m[key]
+	names := map[string]int{}
+
+	if _, ok := names["elon"]; !ok {
+		// if the key doesn't exist yet,
+		// initialize its value to 0
+		names["elon"] = 0
+	}
 */
-// If key is in m, then ok is true. If not, ok is false.
-// If key is not in the map, then elem is the zero value for the map's element type.
 
 // ASSIGNMENT
-// It's important to keep up with privacy regulations and to respect our user's data. We need a function that will delete user records.
+// We have a slice of user ids, and each instance of an id in the slice indicates that a message was sent to that user.
+// We need to count up how many times each user's id appears in the slice to track how many messages they received.
 
-// Complete the deleteIfNecessary function.
-
-// If the user doesn't exist in the map, return the error not found.
-// If they exist but aren't scheduled for deletion, return deleted as false with no errors.
-// If they exist and are scheduled for deletion, return deleted as true with no errors and delete their record from the map.
-// NOTE ON PASSING MAPS
-// Like slices, maps are also passed by reference into functions. This means that when a map is passed into a function we write,
-// we can make changes to the original, we don't have a copy.
+// Implement the getCounts function. It should return a map of string -> int so that each int is a count of how many times
+// each string was found in the slice.
 
 package main
 
 import (
-	"errors"
+	"crypto/md5"
 	"fmt"
-	"sort"
+	"io"
 )
 
-func deleteIfNecessary(users map[string]user, name string) (deleted bool, err error) {
-	existingUser, ok := users[name]
-	if !ok {
-		return false, errors.New("not found")
+func getCounts(userIDs []string) map[string]int {
+	counts := make(map[string]int)
+	for _, userID := range userIDs {
+		count := counts[userID]
+		count++
+		counts[userID] = count
 	}
-	if existingUser.scheduledForDeletion {
-		delete(users, name)
-		return true, nil
-	}
-	return false, nil
+	return counts
 }
 
-// don't touch below this line
+// don't edit below this line
 
-type user struct {
-	name                 string
-	number               int
-	scheduledForDeletion bool
-}
+func test(userIDs []string, ids []string) {
+	fmt.Printf("Generating counts for %v user IDs...\n", len(userIDs))
 
-func test(users map[string]user, name string) {
-	fmt.Printf("Attempting to delete %s...\n", name)
-	defer fmt.Println("====================================")
-	deleted, err := deleteIfNecessary(users, name)
-	if err != nil {
-		fmt.Println(err)
-		return
+	counts := getCounts(userIDs)
+	fmt.Println("Counts from select IDs:")
+	for _, k := range ids {
+		v := counts[k]
+		fmt.Printf(" - %s: %d\n", k, v)
 	}
-	if deleted {
-		fmt.Println("Deleted:", name)
-		return
-	}
-	fmt.Println("Did not delete:", name)
+	fmt.Println("=====================================")
 }
 
 func main() {
-	users := map[string]user{
-		"john": {
-			name:                 "john",
-			number:               18965554631,
-			scheduledForDeletion: true,
-		},
-		"elon": {
-			name:                 "elon",
-			number:               19875556452,
-			scheduledForDeletion: true,
-		},
-		"breanna": {
-			name:                 "breanna",
-			number:               98575554231,
-			scheduledForDeletion: false,
-		},
-		"kade": {
-			name:                 "kade",
-			number:               10765557221,
-			scheduledForDeletion: false,
-		},
+	userIDs := []string{}
+	for i := 0; i < 10000; i++ {
+		h := md5.New()
+		io.WriteString(h, fmt.Sprint(i))
+		key := fmt.Sprintf("%x", h.Sum(nil))
+		userIDs = append(userIDs, key[:2])
 	}
-	test(users, "john")
-	test(users, "musk")
-	test(users, "santa")
-	test(users, "kade")
 
-	keys := []string{}
-	for name := range users {
-		keys = append(keys, name)
-	}
-	sort.Strings(keys)
-
-	fmt.Println("Final map keys:")
-	for _, name := range keys {
-		fmt.Println(" - ", name)
-	}
+	test(userIDs, []string{"00", "ff", "dd"})
+	test(userIDs, []string{"aa", "12", "32"})
+	test(userIDs, []string{"bb", "33"})
 }
 
 // RESULTS:
 
-// Attempting to delete john...
-// Deleted: john
-// ====================================
-// Attempting to delete musk...
-// not found
-// ====================================
-// Attempting to delete santa...
-// not found
-// ====================================
-// Attempting to delete kade...
-// Did not delete: kade
-// ====================================
-// Final map keys:
-//  -  breanna
-//  -  elon
-//  -  kade
+// Generating counts for 10000 user IDs...
+// Counts from select IDs:
+//  - 00: 31
+//  - ff: 27
+//  - dd: 37
+// =====================================
+// Generating counts for 10000 user IDs...
+// Counts from select IDs:
+//  - aa: 29
+//  - 12: 29
+//  - 32: 41
+// =====================================
+// Generating counts for 10000 user IDs...
+// Counts from select IDs:
+//  - bb: 28
+//  - 33: 46
+// =====================================
