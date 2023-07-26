@@ -1,82 +1,50 @@
 /*
  */
-// Pointer : NIL POINTERS
+// Pointer : POINTER RECEIVERS
 
-// NIL POINTERS
-// Pointers can be very dangerous.
+// POINTER RECEIVERS
+// A receiver type on a method can be a pointer.
 
-// If a pointer points to nothing (the zero value of the pointer type) then dereferencing
-// it will cause a runtime error (a panic) that crashes the program. Generally speaking,
-// whenever you're dealing with pointers you should check if it's nil before trying to
-// dereference it.
+// Methods with pointer receivers can modify the value to which the receiver points.
+// Since methods often need to modify their receiver, pointer receivers are more
+// common than value receivers.
 
-// ASSIGNMENT
-// Let's make our profanity checker safe. Update the removeProfanity function. If message
-// is nil, return early to avoid a panic. After all, there are no bad words to remove.
-
-package main
-
-import (
-	"fmt"
-	"strings"
-)
-
-func removeProfanity(message *string) {
-	if message == nil {
-		return
+// POINTER RECEIVER
+/*
+	type car struct {
+		color string
 	}
-	messageVal := *message
-	messageVal = strings.ReplaceAll(messageVal, "dang", "****")
-	messageVal = strings.ReplaceAll(messageVal, "shoot", "*****")
-	messageVal = strings.ReplaceAll(messageVal, "heck", "****")
-	*message = messageVal
-}
 
-// don't touch below this line
+	func (c *car) setColor(color string) {
+		c.color = color
+	}
 
-func test(messages []string) {
-	for _, message := range messages {
-		if message == "" {
-			removeProfanity(nil)
-			fmt.Println("nil message detected")
-		} else {
-			removeProfanity(&message)
-			fmt.Println(message)
+	func main() {
+		c := car{
+			color: "white",
 		}
+		c.setColor("blue")
+		fmt.Println(c.color)
+		// prints "blue"
 	}
-}
+*/
 
-func main() {
-	messages := []string{
-		"well shoot, this is awful",
-		"",
-		"dang robots",
-		"dang them to heck",
-		"",
-	}
-
-	messages2 := []string{
-		"well shoot",
-		"",
-		"Allan is going straight to heck",
-		"dang... that's a tough break",
-		"",
+// NON-POINTER RECEIVER
+/*
+	type car struct {
+		color string
 	}
 
-	test(messages)
-	test(messages2)
+	func (c car) setColor(color string) {
+		c.color = color
+	}
 
-}
-
-// RESULTS:
-
-// well *****, this is awful
-// nil message detected
-// **** robots
-// **** them to ****
-// nil message detected
-// well *****
-// nil message detected
-// Allan is going straight to ****
-// ****... that's a tough break
-// nil message detected
+	func main() {
+		c := car{
+			color: "white",
+		}
+		c.setColor("blue")
+		fmt.Println(c.color)
+		// prints "white"
+	}
+*/
