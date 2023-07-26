@@ -3,41 +3,25 @@
 // Channels : CHANNELS
 
 // [CHANNELS]
-// Channels are a typed, thread-safe queue. Channels allow different goroutines to
-// communicate with each other.
+// Empty structs are often used as tokens in Go programs. In this context, a token
+// is a unary value. In other words, we don't care what is passed through the channel.
+// We care when and if it is passed.
 
-// [CREATE A CHANNEL]
-// Like maps and slices, channels must be created before use. They also use the same
-// make keyword:
+// We can block and wait until something is sent on a channel using the following syntax
 /*
-	ch := make(chan int)
-
+	<-ch
 */
+// This will block until it pops a single item off the channel, then continue, discarding
+// the item.
 
-// [SEND DATA TO A CHANNEL]
-/*
-	ch <- 69
-*/
-// The <- operator is called the channel operator. Data flows in the direction of the
-// arrow. This operation will block until another goroutine is ready to receive the value.
+// ASSIGNMENT
+// Our Mailio server isn't able to boot up until it receives the signal that its databases
+// are all online, and it learns about them being online by waiting for tokens (empty structs)
+// on a channel.
 
-// RECEIVE DATA FROM A CHANNEL
-/*
-	v := <-ch
-*/
-// This reads and removes a value from the channel and saves it into the variable v.
-// This operation will block until there is a value in the channel to be read.
-
-// [BLOCKING AND DEADLOCKS]
-// A deadlock is when a group of goroutines are all blocking so none of them can continue.
-// This is a common bug that you need to watch out for in concurrent programming.
-
-// [ASSIGNMENT]
-// Run the program. You'll see that it deadlocks and never exits. The filterOldEmails
-// function is trying to send on a channel, but no other goroutines are running that
-// can accept the value from the channel.
-
-// Fix the deadlock by spawning a goroutine to send the "is old" values.
+// Complete the waitForDbs function. It should block until it receives numDBs tokens on the
+// dbChan channel. Each time it reads a token the getDatabasesChannel goroutine will print
+// a message to the console for you.
 
 package main
 
@@ -46,111 +30,60 @@ import (
 	"time"
 )
 
-func filterOldEmails(emails []email) {
-	isOldChan := make(chan bool)
-
-	go func() {
-		sendIsOld(isOldChan, emails)
-	}()
-
-	// because the readers doesnt happend yet, and deadlock.
-	isOld := <-isOldChan
-	fmt.Println("email 1 is old:", isOld)
-	isOld = <-isOldChan
-	fmt.Println("email 2 is old:", isOld)
-	isOld = <-isOldChan
-	fmt.Println("email 3 is old:", isOld)
-}
-
-// TEST SUITE -- Don't touch below this line
-
-func sendIsOld(isOldChan chan<- bool, emails []email) {
-	for _, e := range emails {
-		if e.date.Before(time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC)) {
-			isOldChan <- true
-			continue
-		}
-		isOldChan <- false
+func waitForDbs(numDBs int, dbChan chan struct{}) {
+	for i := 0; i < numDBs; i++ {
+		<-dbChan
 	}
 }
 
-type email struct {
-	body string
-	date time.Time
-}
+// don't touch below this line
 
-func test(emails []email) {
-	filterOldEmails(emails)
-	fmt.Println("==========================================")
+func test(numDBs int) {
+	dbChan := getDatabasesChannel(numDBs)
+	fmt.Printf("Waiting for %v databases...\n", numDBs)
+	waitForDbs(numDBs, dbChan)
+	time.Sleep(time.Millisecond * 10) // ensure the last print statement happens
+	fmt.Println("All databases are online!")
+	fmt.Println("=====================================")
 }
 
 func main() {
-	test([]email{
-		{
-			body: "Are you going to make it?",
-			date: time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "I need a break",
-			date: time.Date(2021, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "What were you thinking?",
-			date: time.Date(2022, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-	})
-	test([]email{
-		{
-			body: "Yo are you okay?",
-			date: time.Date(2018, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "Have you heard of that website Boot.dev?",
-			date: time.Date(2017, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "It's awesome honestly.",
-			date: time.Date(2016, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-	})
-	test([]email{
-		{
-			body: "Today is the day!",
-			date: time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "What do you want for lunch?",
-			date: time.Date(2021, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "Why are you the way that you are?",
-			date: time.Date(2022, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-	})
-	test([]email{
-		{
-			body: "Did we do it?",
-			date: time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "Letsa Go!",
-			date: time.Date(2021, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			body: "Okay...?",
-			date: time.Date(2022, 0, 0, 0, 0, 0, 0, time.UTC),
-		},
-	})
+	test(3)
+	test(4)
+	test(5)
+}
+
+func getDatabasesChannel(numDBs int) chan struct{} {
+	ch := make(chan struct{})
+	go func() {
+		for i := 0; i < numDBs; i++ {
+			ch <- struct{}{}
+			fmt.Printf("Database %v is online\n", i+1)
+		}
+	}()
+	return ch
 }
 
 // RESULTS:
 
-// Email sent: 'Hello there Stacy!'
-// Email received: 'Hello there Stacy!'
-// ========================
-// Email sent: 'Hi there John!'
-// Email received: 'Hi there John!'
-// ========================
-// Email sent: 'Hey there Jane!'
-// Email received: 'Hey there Jane!'
-// ========================
+// Waiting for 3 databases...
+// Database 1 is online
+// Database 2 is online
+// Database 3 is online
+// All databases are online!
+// =====================================
+// Waiting for 4 databases...
+// Database 1 is online
+// Database 2 is online
+// Database 3 is online
+// Database 4 is online
+// All databases are online!
+// =====================================
+// Waiting for 5 databases...
+// Database 1 is online
+// Database 2 is online
+// Database 3 is online
+// Database 4 is online
+// Database 5 is online
+// All databases are online!
+// =====================================
