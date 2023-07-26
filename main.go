@@ -1,88 +1,68 @@
 /*
  */
-// MAPS : INSTANCES
+// MAPS : EFFECTIVE GO
 
-// COUNT INSTANCES
-// Remember that you can check if a key is already present in a map by using the second return value from the index operation.
+// EFFECTIVE GO
+// Read the following paraphrased sections from effective Go regarding maps:
+
+// LIKE SLICES, MAPS HOLD REFERENCES
+// Like slices, maps hold references to an underlying data structure. If you pass a map to a function that
+// changes the contents of the map, the changes will be visible in the caller.
+
+// MAP LITERALS
+// Maps can be constructed using the usual composite literal syntax with colon-separated key-value pairs,
+// so it's easy to build them during initialization.
 /*
-	names := map[string]int{}
-
-	if _, ok := names["elon"]; !ok {
-		// if the key doesn't exist yet,
-		// initialize its value to 0
-		names["elon"] = 0
+	var timeZone = map[string]int{
+		"UTC":  0*60*60,
+		"EST": -5*60*60,
+		"CST": -6*60*60,
+		"MST": -7*60*60,
+		"PST": -8*60*60,
 	}
 */
 
-// ASSIGNMENT
-// We have a slice of user ids, and each instance of an id in the slice indicates that a message was sent to that user.
-// We need to count up how many times each user's id appears in the slice to track how many messages they received.
-
-// Implement the getCounts function. It should return a map of string -> int so that each int is a count of how many times
-// each string was found in the slice.
-
-package main
-
-import (
-	"crypto/md5"
-	"fmt"
-	"io"
-)
-
-func getCounts(userIDs []string) map[string]int {
-	counts := make(map[string]int)
-	for _, userID := range userIDs {
-		count := counts[userID]
-		count++
-		counts[userID] = count
-	}
-	return counts
-}
-
-// don't edit below this line
-
-func test(userIDs []string, ids []string) {
-	fmt.Printf("Generating counts for %v user IDs...\n", len(userIDs))
-
-	counts := getCounts(userIDs)
-	fmt.Println("Counts from select IDs:")
-	for _, k := range ids {
-		v := counts[k]
-		fmt.Printf(" - %s: %d\n", k, v)
-	}
-	fmt.Println("=====================================")
-}
-
-func main() {
-	userIDs := []string{}
-	for i := 0; i < 10000; i++ {
-		h := md5.New()
-		io.WriteString(h, fmt.Sprint(i))
-		key := fmt.Sprintf("%x", h.Sum(nil))
-		userIDs = append(userIDs, key[:2])
+// MISSING KEYS
+// An attempt to fetch a map value with a key that is not present in the map will return the zero value for
+// the type of the entries in the map. For instance, if the map contains integers, looking up a non-existent
+// key will return 0. A set can be implemented as a map with value type bool. Set the map entry to true to put
+// the value in the set, and then test it by simple indexing.
+/*
+	attended := map[string]bool{
+		"Ann": true,
+		"Joe": true,
+		...
 	}
 
-	test(userIDs, []string{"00", "ff", "dd"})
-	test(userIDs, []string{"aa", "12", "32"})
-	test(userIDs, []string{"bb", "33"})
-}
+	if attended[person] { // will be false if person is not in the map
+		fmt.Println(person, "was at the meeting")
+	}
+*/
 
-// RESULTS:
+// Sometimes you need to distinguish a missing entry from a zero value. Is there an entry for "UTC" or is that
+// 0 because it's not in the map at all? You can discriminate with a form of multiple assignment.
+/*
+	var seconds int
+	var ok bool
+	seconds, ok = timeZone[tz]
+*/
 
-// Generating counts for 10000 user IDs...
-// Counts from select IDs:
-//  - 00: 31
-//  - ff: 27
-//  - dd: 37
-// =====================================
-// Generating counts for 10000 user IDs...
-// Counts from select IDs:
-//  - aa: 29
-//  - 12: 29
-//  - 32: 41
-// =====================================
-// Generating counts for 10000 user IDs...
-// Counts from select IDs:
-//  - bb: 28
-//  - 33: 46
-// =====================================
+// For obvious reasons, this is called the “comma ok” idiom. In this example, if tz is present, seconds will be
+// set appropriately and ok will be true; if not, seconds will be set to zero and ok will be false. Here's a
+// function that puts it together with a nice error report:
+/*
+	func offset(tz string) int {
+		if seconds, ok := timeZone[tz]; ok {
+			return seconds
+		}
+		log.Println("unknown time zone:", tz)
+		return 0
+	}
+*/
+
+// DELETING MAP ENTRIES
+// To delete a map entry, use the delete built-in function, whose arguments are the map and the key to be deleted.
+// It's safe to do this even if the key is already absent from the map.
+/*
+	delete(timeZone, "PDT")  // Now on Standard Time
+*/
