@@ -1,68 +1,112 @@
 /*
  */
-// MAPS : EFFECTIVE GO
+// MAPS : NESTED
 
-// EFFECTIVE GO
-// Read the following paraphrased sections from effective Go regarding maps:
-
-// LIKE SLICES, MAPS HOLD REFERENCES
-// Like slices, maps hold references to an underlying data structure. If you pass a map to a function that
-// changes the contents of the map, the changes will be visible in the caller.
-
-// MAP LITERALS
-// Maps can be constructed using the usual composite literal syntax with colon-separated key-value pairs,
-// so it's easy to build them during initialization.
+// NESTED
+// Maps can contain maps, creating a nested structure. For example:
 /*
-	var timeZone = map[string]int{
-		"UTC":  0*60*60,
-		"EST": -5*60*60,
-		"CST": -6*60*60,
-		"MST": -7*60*60,
-		"PST": -8*60*60,
-	}
+	map[string]map[string]int
+	map[rune]map[string]int
+	map[int]map[string]map[string]int
 */
 
-// MISSING KEYS
-// An attempt to fetch a map value with a key that is not present in the map will return the zero value for
-// the type of the entries in the map. For instance, if the map contains integers, looking up a non-existent
-// key will return 0. A set can be implemented as a map with value type bool. Set the map entry to true to put
-// the value in the set, and then test it by simple indexing.
-/*
-	attended := map[string]bool{
-		"Ann": true,
-		"Joe": true,
-		...
-	}
+// ASSIGNMENT
+// Because Textio is a glorified customer database, we have a lot of internal logic for sorting and dealing with customer names.
 
-	if attended[person] { // will be false if person is not in the map
-		fmt.Println(person, "was at the meeting")
-	}
+// Complete the getNameCounts function. It takes a slice of strings (names) and returns a nested map where the first key is all
+// the unique first characters of the names, the second key is all the names themselves, and the value is the count of each name.
+
+// For example:
+/*
+	billy
+	billy
+	bob
+	joe
 */
 
-// Sometimes you need to distinguish a missing entry from a zero value. Is there an entry for "UTC" or is that
-// 0 because it's not in the map at all? You can discriminate with a form of multiple assignment.
+// Creates the following nested map:
 /*
-	var seconds int
-	var ok bool
-	seconds, ok = timeZone[tz]
+	b: {
+		billy: 2,
+		bob: 1
+	},
+	j: {
+		joe: 1
+	}
 */
+// Note that the test suite is not printing the map you're returning directly, but instead checking some specific keys.
 
-// For obvious reasons, this is called the “comma ok” idiom. In this example, if tz is present, seconds will be
-// set appropriately and ok will be true; if not, seconds will be set to zero and ok will be false. Here's a
-// function that puts it together with a nice error report:
-/*
-	func offset(tz string) int {
-		if seconds, ok := timeZone[tz]; ok {
-			return seconds
+package main
+
+import (
+	"fmt"
+)
+
+func getNameCounts(names []string) map[rune]map[string]int {
+	counts := make(map[rune]map[string]int)
+	for _, name := range names {
+		if name == "" {
+			continue
 		}
-		log.Println("unknown time zone:", tz)
-		return 0
-	}
-*/
+		firstChar := rune(name[0])
+		_, ok := counts[firstChar]
+		if !ok {
+			counts[firstChar] = make(map[string]int)
+		}
+		counts[firstChar][name]++
 
-// DELETING MAP ENTRIES
-// To delete a map entry, use the delete built-in function, whose arguments are the map and the key to be deleted.
-// It's safe to do this even if the key is already absent from the map.
-/*
-	delete(timeZone, "PDT")  // Now on Standard Time
-*/
+	}
+	// fmt.Println(counts)
+	return counts
+}
+
+// don't edit below this line
+
+func test(names []string, initial rune, name string) {
+	fmt.Printf("Generating counts for %v names...\n", len(names))
+
+	nameCounts := getNameCounts(names)
+	count := nameCounts[initial][name]
+	fmt.Printf("Count for [%c][%s]: %d\n", initial, name, count)
+	fmt.Println("=====================================")
+}
+
+func main() {
+	test(getNames(50), 'M', "Matthew")
+	test(getNames(100), 'G', "George")
+	test(getNames(150), 'D', "Drew")
+	test(getNames(200), 'P', "Philip")
+	test(getNames(250), 'B', "Bryant")
+	test(getNames(300), 'M', "Matthew")
+}
+
+func getNames(length int) []string {
+	names := []string{
+		"Grant", "Eduardo", "Peter", "Matthew", "Matthew", "Matthew", "Peter", "Peter", "Henry", "Parker", "Parker", "Parker", "Collin", "Hayden", "George", "Bradley", "Mitchell", "Devon", "Ricardo", "Shawn", "Taylor", "Nicolas", "Gregory", "Francisco", "Liam", "Kaleb", "Preston", "Erik", "Alexis", "Owen", "Omar", "Diego", "Dustin", "Corey", "Fernando", "Clayton", "Carter", "Ivan", "Jaden", "Javier", "Alec", "Johnathan", "Scott", "Manuel", "Cristian", "Alan", "Raymond", "Brett", "Max", "Drew", "Andres", "Gage", "Mario", "Dawson", "Dillon", "Cesar", "Wesley", "Levi", "Jakob", "Chandler", "Martin", "Malik", "Edgar", "Sergio", "Trenton", "Josiah", "Nolan", "Marco", "Drew", "Peyton", "Harrison", "Drew", "Hector", "Micah", "Roberto", "Drew", "Brady", "Erick", "Conner", "Jonah", "Casey", "Jayden", "Edwin", "Emmanuel", "Andre", "Phillip", "Brayden", "Landon", "Giovanni", "Bailey", "Ronald", "Braden", "Damian", "Donovan", "Ruben", "Frank", "Gerardo", "Pedro", "Andy", "Chance", "Abraham", "Calvin", "Trey", "Cade", "Donald", "Derrick", "Payton", "Darius", "Enrique", "Keith", "Raul", "Jaylen", "Troy", "Jonathon", "Cory", "Marc", "Eli", "Skyler", "Rafael", "Trent", "Griffin", "Colby", "Johnny", "Chad", "Armando", "Kobe", "Caden", "Marcos", "Cooper", "Elias", "Brenden", "Israel", "Avery", "Zane", "Zane", "Zane", "Zane", "Dante", "Josue", "Zackary", "Allen", "Philip", "Mathew", "Dennis", "Leonardo", "Ashton", "Philip", "Philip", "Philip", "Julio", "Miles", "Damien", "Ty", "Gustavo", "Drake", "Jaime", "Simon", "Jerry", "Curtis", "Kameron", "Lance", "Brock", "Bryson", "Alberto", "Dominick", "Jimmy", "Kaden", "Douglas", "Gary", "Brennan", "Zachery", "Randy", "Louis", "Larry", "Nickolas", "Albert", "Tony", "Fabian", "Keegan", "Saul", "Danny", "Tucker", "Myles", "Damon", "Arturo", "Corbin", "Deandre", "Ricky", "Kristopher", "Lane", "Pablo", "Darren", "Jarrett", "Zion", "Alfredo", "Micheal", "Angelo", "Carl", "Oliver", "Kyler", "Tommy", "Walter", "Dallas", "Jace", "Quinn", "Theodore", "Grayson", "Lorenzo", "Joe", "Arthur", "Bryant", "Roman", "Brent", "Russell", "Ramon", "Lawrence", "Moises", "Aiden", "Quentin", "Jay", "Tyrese", "Tristen", "Emanuel", "Salvador", "Terry", "Morgan", "Jeffery", "Esteban", "Tyson", "Braxton", "Branden", "Marvin", "Brody", "Craig", "Ismael", "Rodney", "Isiah", "Marshall", "Maurice", "Ernesto", "Emilio", "Brendon", "Kody", "Eddie", "Malachi", "Abel", "Keaton", "Jon", "Shaun", "Skylar", "Ezekiel", "Nikolas", "Santiago", "Kendall", "Axel", "Camden", "Trevon", "Bobby", "Conor", "Jamal", "Lukas", "Malcolm", "Zackery", "Jayson", "Javon", "Roger", "Reginald", "Zachariah", "Desmond", "Felix", "Johnathon", "Dean", "Quinton", "Ali", "Davis", "Gerald", "Rodrigo", "Demetrius", "Billy", "Rene", "Reece", "Kelvin", "Leo", "Justice", "Chris", "Guillermo", "Matthew", "Matthew", "Matthew", "Kevon", "Steve", "Frederick", "Clay", "Weston", "Dorian", "Hugo", "Roy", "Orlando", "Terrance", "Kai", "Khalil", "Khalil", "Khalil", "Graham", "Noel", "Willie", "Nathanael", "Terrell", "Tyrone",
+	}
+	if length > len(names) {
+		length = len(names)
+	}
+	return names[:length]
+}
+
+// RESULTS:
+
+// Generating counts for 50 names...
+// Count for [M][Matthew]: 3
+// =====================================
+// Generating counts for 100 names...
+// Count for [G][George]: 1
+// =====================================
+// Generating counts for 150 names...
+// Count for [D][Drew]: 4
+// =====================================
+// Generating counts for 200 names...
+// Count for [P][Philip]: 4
+// =====================================
+// Generating counts for 250 names...
+// Count for [B][Bryant]: 1
+// =====================================
+// Generating counts for 300 names...
+// Count for [M][Matthew]: 6
+// =====================================
