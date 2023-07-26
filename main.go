@@ -1,46 +1,43 @@
 /*
  */
-// Channels : CONCURRENCY
+// Channels : CHANNELS
 
-// CONCURRENCY
+// [CHANNELS]
+// Channels are a typed, thread-safe queue. Channels allow different goroutines to
+// communicate with each other.
 
-// WHAT IS CONCURRENCY?
-// Concurrency is the ability to perform multiple tasks at the same time. Typically, our
-// code is executed one line at a time, one after the other. This is called sequential
-// execution or synchronous execution.
-
-// [concurrency]
-//
-// If the computer we're running our code on has multiple cores, we can even execute
-// multiple tasks at exactly the same time. If we're running on a single core, a single
-// core executes code at almost the same time by switching between tasks very quickly.
-// Either way, the code we write looks the same in Go and takes advantage of whatever
-// resources are available.
-
-// HOW DOES CONCURRENCY WORK IN GO?
-//
-// Go was designed to be concurrent, which is a trait fairly unique to Go. It excels
-// at performing many tasks simultaneously safely using a simple syntax.
-
-// There isn't a popular programming language in existence where spawning concurrent
-// execution is quite as elegant, at least in my opinion.
-
-// Concurrency is as simple as using the go keyword when calling a function:
+// [CREATE A CHANNEL]
+// Like maps and slices, channels must be created before use. They also use the same
+// make keyword:
 /*
-	go doSomething()
+	ch := make(chan int)
+
 */
 
-// In the example above, doSomething() will be executed concurrently with the rest of
-// the code in the function. The go keyword is used to spawn a new goroutine.
+// [SEND DATA TO A CHANNEL]
+/*
+	ch <- 69
+*/
+// The <- operator is called the channel operator. Data flows in the direction of the
+// arrow. This operation will block until another goroutine is ready to receive the value.
+
+// RECEIVE DATA FROM A CHANNEL
+/*
+	v := <-ch
+*/
+// This reads and removes a value from the channel and saves it into the variable v.
+// This operation will block until there is a value in the channel to be read.
+
+// [BLOCKING AND DEADLOCKS]
+// A deadlock is when a group of goroutines are all blocking so none of them can continue.
+// This is a common bug that you need to watch out for in concurrent programming.
 
 // [ASSIGNMENT]
-//
-// At Mailio we send a lot of network requests. Each email we send must go out over
-// the internet. To serve our millions of customers, we need a single Go program to
-// be capable of sending thousands of emails at once.
+// Run the program. You'll see that it deadlocks and never exits. The filterOldEmails
+// function is trying to send on a channel, but no other goroutines are running that
+// can accept the value from the channel.
 
-// Edit the sendEmail() function to execute its anonymous function concurrently so
-// that the "received" message prints after the "sent" message.
+// Fix the deadlock by spawning a goroutine to send the "is old" values.
 
 package main
 
@@ -49,26 +46,101 @@ import (
 	"time"
 )
 
-func sendEmail(message string) {
+func filterOldEmails(emails []email) {
+	isOldChan := make(chan bool)
+
 	go func() {
-		time.Sleep(time.Millisecond * 250)
-		fmt.Printf("Email received: '%s'\n", message)
+		sendIsOld(isOldChan, emails)
 	}()
-	fmt.Printf("Email sent: '%s'\n", message)
+
+	// because the readers doesnt happend yet, and deadlock.
+	isOld := <-isOldChan
+	fmt.Println("email 1 is old:", isOld)
+	isOld = <-isOldChan
+	fmt.Println("email 2 is old:", isOld)
+	isOld = <-isOldChan
+	fmt.Println("email 3 is old:", isOld)
 }
 
-// Don't touch below this line
+// TEST SUITE -- Don't touch below this line
 
-func test(message string) {
-	sendEmail(message)
-	time.Sleep(time.Millisecond * 500)
-	fmt.Println("========================")
+func sendIsOld(isOldChan chan<- bool, emails []email) {
+	for _, e := range emails {
+		if e.date.Before(time.Date(2020, 0, 0, 0, 0, 0, 0, time.UTC)) {
+			isOldChan <- true
+			continue
+		}
+		isOldChan <- false
+	}
+}
+
+type email struct {
+	body string
+	date time.Time
+}
+
+func test(emails []email) {
+	filterOldEmails(emails)
+	fmt.Println("==========================================")
 }
 
 func main() {
-	test("Hello there Stacy!")
-	test("Hi there John!")
-	test("Hey there Jane!")
+	test([]email{
+		{
+			body: "Are you going to make it?",
+			date: time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "I need a break",
+			date: time.Date(2021, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "What were you thinking?",
+			date: time.Date(2022, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+	})
+	test([]email{
+		{
+			body: "Yo are you okay?",
+			date: time.Date(2018, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "Have you heard of that website Boot.dev?",
+			date: time.Date(2017, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "It's awesome honestly.",
+			date: time.Date(2016, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+	})
+	test([]email{
+		{
+			body: "Today is the day!",
+			date: time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "What do you want for lunch?",
+			date: time.Date(2021, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "Why are you the way that you are?",
+			date: time.Date(2022, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+	})
+	test([]email{
+		{
+			body: "Did we do it?",
+			date: time.Date(2019, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "Letsa Go!",
+			date: time.Date(2021, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			body: "Okay...?",
+			date: time.Date(2022, 0, 0, 0, 0, 0, 0, time.UTC),
+		},
+	})
 }
 
 // RESULTS:
