@@ -1,91 +1,131 @@
 /*
  */
-// Slices : RANGE
+// MAPS : MAPS
 
-// RANGE
-// Go provides syntactic sugar to iterate easily over elements of a slice:
+// MAPS
+// Maps are similar to JavaScript objects, Python dictionaries, and Ruby hashes. Maps are a data structure that provides key->value mapping.
+
+// The zero value of a map is nil.
+
+// We can create a map by using a literal or by using the make() function:
 /*
-	for INDEX, ELEMENT := range SLICE {
+	ages := make(map[string]int)
+	ages["John"] = 37
+	ages["Mary"] = 24
+	ages["Mary"] = 21 // overwrites 24
+	ages = map[string]int{
+	"John": 37,
+	"Mary": 21,
 	}
 */
 
-// For example:
+// The len() function works on a map, it returns the total number of key/value pairs.
 /*
-	fruits := []string{"apple", "banana", "grape"}
-	for i, fruit := range fruits {
-		fmt.Println(i, fruit)
+	ages = map[string]int{
+	  "John": 37,
+	  "Mary": 21,
 	}
-	// 0 apple
-	// 1 banana
-	// 2 grape
+	fmt.Println(len(ages)) // 2
 */
+
 // ASSIGNMENT
-// We need to be able to quickly detect bad words in the messages our system sends.
-// Complete the indexOfFirstBadWord function. If it finds any bad words in the message it should return
-// the index of the first bad word in the msg slice. This will help us filter out naughty words from our
-// messaging system. If no bad words are found, return -1 instead.
+// We can speed up our contact-info lookups by using a map! Looking up a value in a map by its key is much faster
+// than searching through a slice.
 
-// Use the range keyword.
+// Complete the getUserMap function. It takes a slice of names and a slice of phone numbers, and returns a map of
+// name -> user structs and potentially an error. A user struct just contains a user's name and phone number.
+
+// If the length of names and phoneNumbers is not equal, return an error with the string "invalid sizes".
+
+// The first name in the names slice matches the first phone number, and so on.
 
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-func indexOfFirstBadWord(msg []string, badWords []string) int {
-	for i, word := range msg {
-		for _, badWord := range badWords {
-			if word == badWord {
-				return i
-			}
+func getUserMap(names []string, phoneNumbers []int) (map[string]user, error) {
+	userMap := make(map[string]user)
+	if len(names) != len(phoneNumbers) {
+		return nil, errors.New("invalid sizes")
+	}
+	for i := 0; i < len(names); i++ {
+		name := names[i]
+		phoneNumbers := phoneNumbers[i]
+		userMap[name] = user{
+			name:        name,
+			phoneNumber: phoneNumbers,
 		}
 	}
-	return -1
+	return userMap, nil
 }
 
 // don't touch below this line
 
-func test(msg []string, badWords []string) {
-	i := indexOfFirstBadWord(msg, badWords)
-	fmt.Printf("Scanning message: %v for bad words:\n", msg)
-	for _, badWord := range badWords {
-		fmt.Println(` -`, badWord)
+type user struct {
+	name        string
+	phoneNumber int
+}
+
+func test(names []string, phoneNumbers []int) {
+	fmt.Println("Creating map...")
+	defer fmt.Println("====================================")
+	users, err := getUserMap(names, phoneNumbers)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	fmt.Printf("Index: %v\n", i)
-	fmt.Println("====================================")
+	for _, name := range names {
+		fmt.Printf("key: %v, value:\n", name)
+		fmt.Println(" - name:", users[name].name)
+		fmt.Println(" - number:", users[name].phoneNumber)
+	}
 }
 
 func main() {
-	badWords := []string{"crap", "shoot", "dang", "frick"}
-	message := []string{"hey", "there", "john"}
-	test(message, badWords)
-
-	message = []string{"ugh", "oh", "my", "frick"}
-	test(message, badWords)
-
-	message = []string{"what", "the", "shoot", "I", "hate", "that", "crap"}
-	test(message, badWords)
+	test(
+		[]string{"John", "Bob", "Jill"},
+		[]int{14355550987, 98765550987, 18265554567},
+	)
+	test(
+		[]string{"John", "Bob"},
+		[]int{14355550987, 98765550987, 18265554567},
+	)
+	test(
+		[]string{"George", "Sally", "Rich", "Sue"},
+		[]int{20955559812, 38385550982, 48265554567, 16045559873},
+	)
 }
 
 // RESULTS:
 
-// Scanning message: [hey there john] for bad words:
-//  - crap
-//  - shoot
-//  - dang
-//  - frick
-// Index: -1
+// Creating map...
+// key: John, value:
+//  - name: John
+//  - number: 14355550987
+// key: Bob, value:
+//  - name: Bob
+//  - number: 98765550987
+// key: Jill, value:
+//  - name: Jill
+//  - number: 18265554567
 // ====================================
-// Scanning message: [ugh oh my frick] for bad words:
-//  - crap
-//  - shoot
-//  - dang
-//  - frick
-// Index: 3
+// Creating map...
+// invalid sizes
 // ====================================
-// Scanning message: [what the shoot I hate that crap] for bad words:
-//  - crap
-//  - shoot
-//  - dang
-//  - frick
-// Index: 2
+// Creating map...
+// key: George, value:
+//  - name: George
+//  - number: 20955559812
+// key: Sally, value:
+//  - name: Sally
+//  - number: 38385550982
+// key: Rich, value:
+//  - name: Rich
+//  - number: 48265554567
+// key: Sue, value:
+//  - name: Sue
+//  - number: 16045559873
 // ====================================
