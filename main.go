@@ -1,114 +1,97 @@
 /*
  */
-// Advanced Functions : CLOSURES
+// Advanced Functions : ANONYMOUS FUNCTIONS
 
-// CLOSURES
-// A closure is a function that references variables from outside its own function body.
-// The function may access and assign to the referenced variables.
+// ANONYMOUS FUNCTIONS
+// Anonymous functions are true to form in that they have no name. We've been using them
+// throughout this chapter, but we haven't really talked about them yet.
 
-// In this example, the concatter() function returns a function that has reference to an
-// enclosed doc value. Each successive call to harryPotterAggregator mutates that same
-// doc variable.
+// Anonymous functions are useful when defining a function that will only be used once
+// or to create a quick closure.
 /*
-	func concatter() func(string) string {
-		doc := ""
-		return func(word string) string {
-			doc += word + " "
-			return doc
+	// doMath accepts a function that converts one int into another
+	// and a slice of ints. It returns a slice of ints that have been
+	// converted by the passed in function.
+	func doMath(f func(int) int, nums []int) []int {
+		var results []int
+		for _, n := range nums {
+			results = append(results, f(n))
 		}
+		return results
 	}
-	func main() {
-		harryPotterAggregator := concatter()
-		harryPotterAggregator("Mr.")
-		harryPotterAggregator("and")
-		harryPotterAggregator("Mrs.")
-		harryPotterAggregator("Dursley")
-		harryPotterAggregator("of")
-		harryPotterAggregator("number")
-		harryPotterAggregator("four,")
-		harryPotterAggregator("Privet")
 
-		fmt.Println(harryPotterAggregator("Drive"))
-		// Mr. and Mrs. Dursley of number four, Privet Drive
+	func main() {
+		nums := []int{1, 2, 3, 4, 5}
+
+		// Here we define an anonymous function that doubles an int
+		// and pass it to doMath
+		allNumsDoubled := doMath(func(x int) int {
+			return x + x
+		}, nums)
+
+		fmt.Println(allNumsDoubled)
+		// prints:
+		// [2 4 6 8 10]
 	}
 */
 
 // ASSIGNMENT
-// Keeping track of how many emails we send is mission-critical at Mailio. Complete the
-// adder() function.
+// Complete the printReports function.
 
-// It should return a function that adds its input (an int) to an enclosed sum value,
-// then return the new sum. In other words, it keeps a running total of the sum variable
+// Call printCostReport once for each message. Pass in an anonymous function as the
+// costCalculator that returns an int equal to twice the length of the input message.
 // within a closure.
 
 package main
 
 import "fmt"
 
-func adder() func(int) int {
-	sum := 0
-	return func(x int) int {
-		sum += x
-		return sum
+func printReports(messages []string) {
+	for _, message := range messages {
+		printCostReport(func(msg string) int {
+			return len(msg) * 2
+		}, message)
 	}
 }
 
 // don't touch below this line
 
-type emailBill struct {
-	costInPennies int
-}
-
-func test(bills []emailBill) {
+func test(messages []string) {
 	defer fmt.Println("====================================")
-	countAdder, costAdder := adder(), adder()
-	for _, bill := range bills {
-		fmt.Println(bill)
-		fmt.Printf("You've sent %d emails and it has cost you %d cents\n", countAdder(1), costAdder(bill.costInPennies))
-	}
+	printReports(messages)
 }
 
 func main() {
-	test([]emailBill{
-		{45},
-		{32},
-		{43},
-		{12},
-		{34},
-		{54},
+	test([]string{
+		"Here's Johnny!",
+		"Go ahead, make my day",
+		"You had me at hello",
+		"There's no place like home",
 	})
 
-	test([]emailBill{
-		{12},
-		{12},
-		{976},
-		{12},
-		{543},
+	test([]string{
+		"Hello, my name is Inigo Montoya. You killed my father. Prepare to die.",
+		"May the Force be with you.",
+		"Show me the money!",
+		"Go ahead, make my day.",
 	})
+}
 
-	test([]emailBill{
-		{743},
-		{13},
-		{8},
-	})
+func printCostReport(costCalculator func(string) int, message string) {
+	cost := costCalculator(message)
+	fmt.Printf(`Message: "%s" Cost: %v cents`, message, cost)
+	fmt.Println()
 }
 
 // RESULTS:
 
-// You've sent 1 emails and it has cost you 45 cents
-// You've sent 2 emails and it has cost you 77 cents
-// You've sent 3 emails and it has cost you 120 cents
-// You've sent 4 emails and it has cost you 132 cents
-// You've sent 5 emails and it has cost you 166 cents
-// You've sent 6 emails and it has cost you 220 cents
+// Message: "Here's Johnny!" Cost: 28 cents
+// Message: "Go ahead, make my day" Cost: 42 cents
+// Message: "You had me at hello" Cost: 38 cents
+// Message: "There's no place like home" Cost: 52 cents
 // ====================================
-// You've sent 1 emails and it has cost you 12 cents
-// You've sent 2 emails and it has cost you 24 cents
-// You've sent 3 emails and it has cost you 1000 cents
-// You've sent 4 emails and it has cost you 1012 cents
-// You've sent 5 emails and it has cost you 1555 cents
-// ====================================
-// You've sent 1 emails and it has cost you 743 cents
-// You've sent 2 emails and it has cost you 756 cents
-// You've sent 3 emails and it has cost you 764 cents
+// Message: "Hello, my name is Inigo Montoya. You killed my father. Prepare to die." Cost: 140 cents
+// Message: "May the Force be with you." Cost: 52 cents
+// Message: "Show me the money!" Cost: 36 cents
+// Message: "Go ahead, make my day." Cost: 44 cents
 // ====================================
