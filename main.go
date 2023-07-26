@@ -1,17 +1,15 @@
-// Loops : OMITTING CONDITIONS FROM A FOR LOOP IN GO
+// Loops : THERE IS NO WHILE LOOP IN GO
 
 // ASSIGNMENT
-// Complete the maxMessages function. Given a cost threshold, it should calculate the maximum number of messages that can be sent.
-//
-// Each message costs 1.0, plus an additional fee. The fee structure is:
-//
-// 1st message: 1.0 + 0.00
-// 2nd message: 1.0 + 0.01
-// 3rd message: 1.0 + 0.02
-// 4th message: 1.0 + 0.03
-//
-// BROWSER FREEZE
-// If you lock up your browser by creating an infinite loop that isn't breaking, just click the cancel button.
+// We have an interesting new cost structure from our SMS vendor. They charge exponentially
+// more money for each consecutive text we send! Let's write a function that can calculate
+// how many messages we can send in a given batch given a costMultiplier and a maxCostInPennies.
+
+// In a nutshell, the first message costs a penny, and each message after that costs the same
+// as the previous message multiplied by the costMultiplier. That gets expensive!
+
+// There is an infinite loop in the code! Add a condition to the for loop to fix the bug. The
+// loop should break as soon as the actualCostInPennies is greater than the maxCostInPennies.
 
 package main
 
@@ -19,47 +17,50 @@ import (
 	"fmt"
 )
 
-func maxMessages(thresh float64) int {
-	totalCost := 0.0
-	for i := 0; ; i++ {
-		totalCost += 1.0 + (0.1 * float64(i))
-		if totalCost > thresh {
-			return i
-		}
+func getMaxMessagesToSend(costMultiplier float64, maxCostInPennies int) int {
+	actualCostInPennies := 1.0
+	maxMessagesToSend := 0
+	for actualCostInPennies <= float64(maxCostInPennies) {
+		actualCostInPennies *= costMultiplier
+		maxMessagesToSend++
 	}
+
+	return maxMessagesToSend
 }
 
-// don't edit below this line
+// don't touch below this line
 
-func test(thresh float64) {
-	fmt.Printf("Threshold: %.2f\n", thresh)
-	max := maxMessages(thresh)
-	fmt.Printf("Maximum messages that can be sent: = %v\n", max)
-	fmt.Println("===============================================================")
+func test(costMultiplier float64, maxCostInPennies int) {
+	maxMessagesToSend := getMaxMessagesToSend(costMultiplier, maxCostInPennies)
+	fmt.Printf("Multiplier: %v\n",
+		costMultiplier,
+	)
+	fmt.Printf("Max cost: %v\n",
+		maxCostInPennies,
+	)
+	fmt.Printf("Max messages you can send: %v\n",
+		maxMessagesToSend,
+	)
+	fmt.Println("====================================")
 }
 
 func main() {
-	test(10.00)
-	test(20.00)
-	test(30.00)
-	test(40.00)
-	test(50.00)
+	test(1.1, 5)
+	test(1.3, 10)
+	test(1.35, 25)
 }
 
 // RESULTS:
 
-// Threshold: 10.00
-// Maximum messages that can be sent: = 7
-// ===============================================================
-// Threshold: 20.00
-// Maximum messages that can be sent: = 12
-// ===============================================================
-// Threshold: 30.00
-// Maximum messages that can be sent: = 16
-// ===============================================================
-// Threshold: 40.00
-// Maximum messages that can be sent: = 20
-// ===============================================================
-// Threshold: 50.00
-// Maximum messages that can be sent: = 23
-// ===============================================================
+// Multiplier: 1.1
+// Max cost: 5
+// Max messages you can send: 17
+// ====================================
+// Multiplier: 1.3
+// Max cost: 10
+// Max messages you can send: 9
+// ====================================
+// Multiplier: 1.35
+// Max cost: 25
+// Max messages you can send: 11
+// ====================================
