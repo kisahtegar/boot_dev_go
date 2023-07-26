@@ -2,78 +2,89 @@
  */
 // Pointer : INTRODUCTION TO POINTERS
 
-// INTRODUCTION TO POINTERS
-// As we have learned, a variable is a named location in memory that stores a value.
-// We can manipulate the value of a variable by assigning a new value to it or by
-// performing operations on it. When we assign a value to a variable, we are storing
-// that value in a specific location in memory.
-/*
-	x := 42
-	// "x" is the name of a location in memory. That location is storing the integer value of 42
-*/
-
-// A POINTER IS A VARIABLE
-// A pointer is a variable that stores the memory address of another variable. This
-// means that a pointer "points to" the location of where the data is stored NOT the
-// actual data itself.
-
+// POINTERS
+// Pointers hold the memory address of a value.
 /*
 	// The * syntax defines a pointer:
 	var p *int
+	A pointer's zero value is nil
 
 	// The & operator generates a pointer to its operand.
 	myString := "hello"
 	myStringPtr = &myString
+
+	// The * dereferences a pointer to gain access to the value
+	fmt.Println(*myStringPtr) // read myString through the pointer
+	*myStringPtr = "world"    // set myString through the pointer
 */
+// Unlike C, Go has no pointer arithmetic
 
-// WHY ARE POINTERS USEFUL?
-// Pointers allow us to manipulate data in memory directly, without making copies or
-// duplicating data. This can make programs more efficient and allow us to do things
-// that would be difficult or impossible without them.
+// [ JUST BECAUSE YOU CAN DOESN'T MEAN YOU SHOULD ]
+//
+// We're doing this exercise to understand that pointers can be used in this way.
+// That said, pointers can be very dangerous. It's generally a better idea to have
+// your functions accept non-pointers and return new values rather than mutating
+// pointer inputs.
 
-// ASSIGNMENT
-// Fix the bug in the sendMessage function. It's supposed to print a nicely formatted
-// message to the console containing an SMS's recipient and message body. However,
-// it's not working as expected. Run the code and see what happens, then fix the bug.
+// [ ASSIGNMENT ]
+// Complete the removeProfanity function.
+
+// It should use the strings.ReplaceAll function to replace all instances of the
+// following words in the input message with asterisks.
+// - "dang" -> "****"
+// - "shoot" -> "*****"
+// - "heck" -> "****"
+
+// It should mutate the value in the pointer and return nothing.
+
+// Do not alter the function signature.
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
-type Message struct {
-	Recipient string
-	Text      string
+func removeProfanity(message *string) {
+	messageVal := *message
+	messageVal = strings.ReplaceAll(messageVal, "dang", "****")
+	messageVal = strings.ReplaceAll(messageVal, "shoot", "*****")
+	messageVal = strings.ReplaceAll(messageVal, "heck", "****")
+	*message = messageVal
 }
 
-// Don't touch above this line
+// don't touch below this line
 
-func sendMessage(m Message) {
-	fmt.Printf("To: %v\n", m.Recipient)
-	fmt.Printf("Message: %v\n", m.Text)
-}
-
-// Don't touch below this line
-
-func test(recipient string, text string) {
-	m := Message{Recipient: recipient, Text: text}
-	sendMessage(m)
-	fmt.Println("=====================================")
+func test(messages []string) {
+	for _, message := range messages {
+		removeProfanity(&message)
+		fmt.Println(message)
+	}
 }
 
 func main() {
-	test("Lane", "Textio is getting better everyday!")
-	test("Allan", "This pointer stuff is weird...")
-	test("Tiffany", "What time will you be home for dinner?")
+	messages1 := []string{
+		"well shoot, this is awful",
+		"dang robots",
+		"dang them to heck",
+	}
+
+	messages2 := []string{
+		"well shoot",
+		"Allan is going straight to heck",
+		"dang... that's a tough break",
+	}
+
+	test(messages1)
+	test(messages2)
 }
 
 // RESULTS:
 
-// To: Lane
-// Message: Textio is getting better everyday!
-// =====================================
-// To: Allan
-// Message: This pointer stuff is weird...
-// =====================================
-// To: Tiffany
-// Message: What time will you be home for dinner?
-// =====================================
+// well *****, this is awful
+// **** robots
+// **** them to ****
+// well *****
+// Allan is going straight to ****
+// ****... that's a tough break
