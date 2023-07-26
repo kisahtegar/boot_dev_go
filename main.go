@@ -1,109 +1,166 @@
 /*
  */
-// Advanced Functions : CURRYING
+// Advanced Functions : DEFER
 
-// CURRYING
-// Function currying is the practice of writing a function that takes a function (or functions) as input,
-// and returns a new function.
+// DEFER
+// The defer keyword is a fairly unique feature of Go. It allows a function to be executed automatically
+// just before its enclosing function returns.
+
+// The deferred call's arguments are evaluated immediately, but the function call is not executed until
+// the surrounding function returns.
+
+// Deferred functions are typically used to close database connections, file handlers and the like.
 
 // For example:
 /*
-	func main() {
-		squareFunc := selfMath(multiply)
-		doubleFunc := selfMath(add)
+	// CopyFile copies a file from srcName to dstName on the local filesystem.
+	func CopyFile(dstName, srcName string) (written int64, err error) {
 
-		fmt.Println(squareFunc(5))
-		// prints 25
-
-		fmt.Println(doubleFunc(5))
-		// prints 10
-	}
-
-	func multiply(x, y int) int {
-		return x * y
-	}
-
-	func add(x, y int) int {
-		return x + y
-	}
-
-	func selfMath(mathFunc func(int, int) int) func (int) int {
-		return func(x int) int {
-			return mathFunc(x, x)
+		// Open the source file
+		src, err := os.Open(srcName)
+		if err != nil {
+			return
 		}
+		// Close the source file when the CopyFile function returns
+		defer src.Close()
+
+		// Create the destination file
+		dst, err := os.Create(dstName)
+		if err != nil {
+			return
+		}
+		// Close the destination file when the CopyFile function returns
+		defer dst.Close()
+
+		return io.Copy(dst, src)
 	}
 */
-// In the example above, the selfMath function takes in a function as its parameter, and returns a function
-// that itself returns the value of running that input function on its parameter.
+// In the above example, the src.Close() function is not called until after the CopyFile function was
+// called but immediately before the CopyFile function returns.
+
+// Defer is a great way to make sure that something happens at the end of a function, even if there
+// are multiple return statements.
 
 // ASSIGNMENT
-// The Mailio API needs a very robust error-logging system so we can see when things are going awry in the
-// back-end system. We need a function that can create a custom "logger" (a function that prints to the console)
-// given a specific formatter.
+// There is a bug in the logAndDelete function, fix it!
 
-// Complete the getLogger function. It should return a new function that prints the formatted inputs using the
-// given formatter function. The inputs should be passed into the formatter function in the order they are given
-// to the logger function.
+// This function should always delete the user from the user's map, which is a map that stores the
+// user's name as keys. It also returns a log string that indicates to the caller some information
+// about the user's deletion.
+
+// To avoid bugs like this in the future, instead of calling delete before each return, just defer
+// the delete once at the beginning of the function.
 
 package main
 
 import (
-	"errors"
 	"fmt"
+	"sort"
 )
 
-// getLogger takes a function that formats two strings into
-// a single string and returns a function that formats two strings but prints
-// the result instead of returning it
-func getLogger(formatter func(string, string) string) func(string, string) {
-	return func(a string, b string) {
-		fmt.Println(formatter(a, b))
+const (
+	logDeleted  = "user deleted"
+	logNotFound = "user not found"
+	logAdmin    = "admin deleted"
+)
+
+func logAndDelete(users map[string]user, name string) (log string) {
+	defer delete(users, name)
+	user, ok := users[name]
+	if !ok {
+		// delete(users, name)
+		return logNotFound
 	}
+	if user.admin {
+		return logAdmin
+	}
+	// delete(users, name)
+	return logDeleted
 }
 
 // don't touch below this line
 
-func test(first string, errors []error, formatter func(string, string) string) {
-	defer fmt.Println("====================================")
-	logger := getLogger(formatter)
-	fmt.Println("Logs:")
-	for _, err := range errors {
-		logger(first, err.Error())
-	}
+type user struct {
+	name   string
+	number int
+	admin  bool
 }
 
-func colonDelimit(first, second string) string {
-	return first + ": " + second
-}
-func commaDelimit(first, second string) string {
-	return first + ", " + second
+func test(users map[string]user, name string) {
+	fmt.Printf("Attempting to delete %s...\n", name)
+	defer fmt.Println("====================================")
+	log := logAndDelete(users, name)
+	fmt.Println("Log:", log)
 }
 
 func main() {
-	dbErrors := []error{
-		errors.New("out of memory"),
-		errors.New("cpu is pegged"),
-		errors.New("networking issue"),
-		errors.New("invalid syntax"),
+	users := map[string]user{
+		"john": {
+			name:   "john",
+			number: 18965554631,
+			admin:  true,
+		},
+		"elon": {
+			name:   "elon",
+			number: 19875556452,
+			admin:  true,
+		},
+		"breanna": {
+			name:   "breanna",
+			number: 98575554231,
+			admin:  false,
+		},
+		"kade": {
+			name:   "kade",
+			number: 10765557221,
+			admin:  false,
+		},
 	}
-	test("Error on database server", dbErrors, colonDelimit)
 
-	mailErrors := []error{
-		errors.New("email too large"),
-		errors.New("non alphanumeric symbols found"),
+	fmt.Println("Initial users:")
+	usersSorted := []string{}
+	for name := range users {
+		usersSorted = append(usersSorted, name)
 	}
-	test("Error on mail server", mailErrors, commaDelimit)
+	sort.Strings(usersSorted)
+	for _, name := range usersSorted {
+		fmt.Println(" -", name)
+	}
+	fmt.Println("====================================")
+
+	test(users, "john")
+	test(users, "santa")
+	test(users, "kade")
+
+	fmt.Println("Final users:")
+	usersSorted = []string{}
+	for name := range users {
+		usersSorted = append(usersSorted, name)
+	}
+	sort.Strings(usersSorted)
+	for _, name := range usersSorted {
+		fmt.Println(" -", name)
+	}
+	fmt.Println("====================================")
 }
 
 // RESULTS:
 
-// Logs:
-// Error on database server: out of memory
-// Error on database server: cpu is pegged
-// Error on database server: networking issue
-// Error on database server: invalid syntax
+// Initial users:
+//  - breanna
+//  - elon
+//  - john
+//  - kade
 // ====================================
-// Logs:
-// Error on mail server, email too large
-// Error on mail server, non alphanumeric symbols found
+// Attempting to delete john...
+// Log: admin deleted
 // ====================================
+// Attempting to delete santa...
+// Log: user not found
+// ====================================
+// Attempting to delete kade...
+// Log: user deleted
+// ====================================
+// Final users:
+//  - breanna
+//  - elon
