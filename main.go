@@ -1,112 +1,84 @@
 /*
  */
-// Pointer : POINTER RECEIVER CODE
+// Channels : CONCURRENCY
 
-// POINTER RECEIVER CODE
-// Methods with pointer receivers don't require that a pointer is used to call the
-// method. The pointer will automatically be derived from the value.
+// CONCURRENCY
+
+// WHAT IS CONCURRENCY?
+// Concurrency is the ability to perform multiple tasks at the same time. Typically, our
+// code is executed one line at a time, one after the other. This is called sequential
+// execution or synchronous execution.
+
+// [concurrency]
+//
+// If the computer we're running our code on has multiple cores, we can even execute
+// multiple tasks at exactly the same time. If we're running on a single core, a single
+// core executes code at almost the same time by switching between tasks very quickly.
+// Either way, the code we write looks the same in Go and takes advantage of whatever
+// resources are available.
+
+// HOW DOES CONCURRENCY WORK IN GO?
+//
+// Go was designed to be concurrent, which is a trait fairly unique to Go. It excels
+// at performing many tasks simultaneously safely using a simple syntax.
+
+// There isn't a popular programming language in existence where spawning concurrent
+// execution is quite as elegant, at least in my opinion.
+
+// Concurrency is as simple as using the go keyword when calling a function:
 /*
-	type circle struct {
-		x int
-		y int
-		radius int
-	}
-
-	func (c *circle) grow(){
-		c.radius *= 2
-	}
-
-	func main(){
-		c := circle{
-			x: 1,
-			y: 2,
-			radius: 4,
-		}
-
-		// notice c is not a pointer in the calling function
-		// but the method still gains access to a pointer to c
-		c.grow()
-		fmt.Println(c.radius)
-		// prints 8
-	}
+	go doSomething()
 */
 
-// ASSIGNMENT
-// Fix the bug in the code so that setMessage sets the message field of the given
-// email structure, and the new value persists outside the scope of the setMessage
-// method.
+// In the example above, doSomething() will be executed concurrently with the rest of
+// the code in the function. The go keyword is used to spawn a new goroutine.
+
+// [ASSIGNMENT]
+//
+// At Mailio we send a lot of network requests. Each email we send must go out over
+// the internet. To serve our millions of customers, we need a single Go program to
+// be capable of sending thousands of emails at once.
+
+// Edit the sendEmail() function to execute its anonymous function concurrently so
+// that the "received" message prints after the "sent" message.
 
 package main
 
 import (
 	"fmt"
+	"time"
 )
 
-func (e *email) setMessage(newMessage string) {
-	e.message = newMessage
+func sendEmail(message string) {
+	go func() {
+		time.Sleep(time.Millisecond * 250)
+		fmt.Printf("Email received: '%s'\n", message)
+	}()
+	fmt.Printf("Email sent: '%s'\n", message)
 }
 
-// don't edit below this line
+// Don't touch below this line
 
-type email struct {
-	message     string
-	fromAddress string
-	toAddress   string
-}
-
-func test(e *email, newMessage string) {
-	fmt.Println("-- before --")
-	e.print()
-	fmt.Println("-- end before --")
-	e.setMessage("this is my second draft")
-	fmt.Println("-- after --")
-	e.print()
-	fmt.Println("-- end after --")
-	fmt.Println("==========================")
-}
-
-func (e email) print() {
-	fmt.Println("message:", e.message)
-	fmt.Println("fromAddress:", e.fromAddress)
-	fmt.Println("toAddress:", e.toAddress)
+func test(message string) {
+	sendEmail(message)
+	time.Sleep(time.Millisecond * 500)
+	fmt.Println("========================")
 }
 
 func main() {
-	test(&email{
-		message:     "this is my first draft",
-		fromAddress: "sandra@mailio-test.com",
-		toAddress:   "bullock@mailio-test.com",
-	}, "this is my second draft")
-
-	test(&email{
-		message:     "this is my third draft",
-		fromAddress: "sandra@mailio-test.com",
-		toAddress:   "bullock@mailio-test.com",
-	}, "this is my fourth draft")
-
+	test("Hello there Stacy!")
+	test("Hi there John!")
+	test("Hey there Jane!")
 }
 
 // RESULTS:
 
-// -- before --
-// message: this is my first draft
-// fromAddress: sandra@mailio-test.com
-// toAddress: bullock@mailio-test.com
-// -- end before --
-// -- after --
-// message: this is my second draft
-// fromAddress: sandra@mailio-test.com
-// toAddress: bullock@mailio-test.com
-// -- end after --
-// ==========================
-// -- before --
-// message: this is my third draft
-// fromAddress: sandra@mailio-test.com
-// toAddress: bullock@mailio-test.com
-// -- end before --
-// -- after --
-// message: this is my second draft
-// fromAddress: sandra@mailio-test.com
-// toAddress: bullock@mailio-test.com
-// -- end after --
-// ==========================
+// Email sent: 'Hello there Stacy!'
+// Email received: 'Hello there Stacy!'
+// ========================
+// Email sent: 'Hi there John!'
+// Email received: 'Hi there John!'
+// ========================
+// Email sent: 'Hey there Jane!'
+// Email received: 'Hey there Jane!'
+// ========================
