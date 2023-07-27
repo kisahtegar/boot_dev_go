@@ -1,128 +1,161 @@
 /*
  */
-// Channels : RANGE
+// Channels : SELECT
 
-// RANGE
-// Similar to slices and maps, channels can be ranged over.
+// SELECT
+// Sometimes we have a single goroutine listening to multiple channels and want to
+// process data in the order it comes through each channel.
+
+// A select statement is used to listen to multiple channels at the same time. It
+// is similar to a switch statement but for channels.
 /*
-	for item := range ch {
-		// item is the next value received from the channel
+	select {
+		case i, ok := <- chInts:
+			fmt.Println(i)
+		case s, ok := <- chStrings:
+			fmt.Println(s)
 	}
 */
-
-// This example will receive values over the channel (blocking at each iteration if
-// nothing new is there) and will exit only when the channel is closed.
+// The first channel with a value ready to be received will fire and its body will
+// execute. If multiple channels are ready at the same time one is chosen randomly.
+// The ok variable in the example above refers to whether or not the channel has
+// been closed by the sender yet.
 
 // ASSIGNMENT
-// It's that time again, Mailio is hiring and we've been assigned to do the interview.
-// For some reason, the Fibonacci sequence is Mailio's interview problem of choice.
-// We've been tasked with building a small toy program we can use in the interview.
+// Complete the logMessages function.
 
-// Complete the concurrrentFib function. It should:
+// Use an infinite for loop and a select statement to log the emails and sms messages
+// as they come in order across the two channels. Add a condition to return from the
+// function when one of the two channels closes, whichever is first.
 
-// Create a new channel of ints
-// Call fibonacci in a goroutine, passing it the channel and the number of Fibonacci
-// numbers to generate, n
-// Use a range loop to read from the channel and print out the numbers one by one,
-// each on a new line
+// Use the logSms and logEmail functions to log the messages.
 
 package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 )
 
-func concurrrentFib(n int) {
-	chInts := make(chan int)
-	go func() {
-		fibonacci(n, chInts)
-	}()
-	for v := range chInts {
-		fmt.Println(v)
+func logMessages(chEmails, chSms chan string) {
+	// this will loop forever until those channels are closed
+	for {
+		select {
+		case email, ok := <-chEmails:
+			if !ok {
+				return
+			}
+			logEmail(email)
+		case sms, ok := <-chSms:
+			if !ok {
+				return
+			}
+			logSms(sms)
+		}
 	}
 }
 
 // don't touch below this line
 
-func test(n int) {
-	fmt.Printf("Printing %v numbers...\n", n)
-	concurrrentFib(n)
-	fmt.Println("==============================")
+func logSms(sms string) {
+	fmt.Println("SMS:", sms)
+}
+
+func logEmail(email string) {
+	fmt.Println("Email:", email)
+}
+
+func test(sms []string, emails []string) {
+	fmt.Println("Starting...")
+
+	chSms, chEmails := sendToLogger(sms, emails)
+
+	logMessages(chEmails, chSms)
+	fmt.Println("===============================")
 }
 
 func main() {
-	test(10)
-	test(5)
-	test(20)
-	test(13)
+	rand.Seed(0)
+	test(
+		[]string{
+			"hi friend",
+			"What's going on?",
+			"Welcome to the business",
+			"I'll pay you to be my friend",
+			"My pleausere",
+		},
+		[]string{
+			"Will you make your appointment?",
+			"Let's be friends",
+			"What are you doing?",
+			"I can't believe you've done this.",
+			"Hello world.",
+		},
+	)
+	test(
+		[]string{
+			"this song slaps hard",
+			"yooo hoooo",
+			"i'm a big fan",
+		},
+		[]string{
+			"What do you think of this song?",
+			"I hate this band",
+			"Can you believe this song?",
+		},
+	)
 }
 
-func fibonacci(n int, ch chan int) {
-	x, y := 0, 1
-	for i := 0; i < n; i++ {
-		ch <- x
-		x, y = y, x+y
-		time.Sleep(time.Millisecond * 10)
-	}
-	close(ch) // close channel
+func sendToLogger(sms, emails []string) (chSms, chEmails chan string) {
+	chSms = make(chan string)
+	chEmails = make(chan string)
+	go func() {
+		for i := 0; i < len(sms) && i < len(emails); i++ {
+			done := make(chan struct{})
+			s := sms[i]
+			e := emails[i]
+			t1 := time.Millisecond * time.Duration(rand.Intn(1000))
+			t2 := time.Millisecond * time.Duration(rand.Intn(1000))
+			go func() {
+				time.Sleep(t1)
+				chSms <- s
+				done <- struct{}{}
+			}()
+			go func() {
+				time.Sleep(t2)
+				chEmails <- e
+				done <- struct{}{}
+			}()
+			<-done
+			<-done
+			time.Sleep(10 * time.Millisecond)
+		}
+		close(chSms)
+		close(chEmails)
+	}()
+	return chSms, chEmails
 }
 
 // RESULTS:
 
-// Printing 10 numbers...
-// 0
-// 1
-// 1
-// 2
-// 3
-// 5
-// 8
-// 13
-// 21
-// 34
-// ==============================
-// Printing 5 numbers...
-// 0
-// 1
-// 1
-// 2
-// 3
-// ==============================
-// Printing 20 numbers...
-// 0
-// 1
-// 1
-// 2
-// 3
-// 5
-// 8
-// 13
-// 21
-// 34
-// 55
-// 89
-// 144
-// 233
-// 377
-// 610
-// 987
-// 1597
-// 2584
-// 4181
-// ==============================
-// Printing 13 numbers...
-// 0
-// 1
-// 1
-// 2
-// 3
-// 5
-// 8
-// 13
-// 21
-// 34
-// 55
-// 89
-// 144
-// ==============================
+// Starting...
+// SMS: hi friend
+// Email: Will you make your appointment?
+// SMS: What's going on?
+// Email: Let's be friends
+// Email: What are you doing?
+// SMS: Welcome to the business
+// Email: I can't believe you've done this.
+// SMS: I'll pay you to be my friend
+// SMS: My pleausere
+// Email: Hello world.
+// ===============================
+// Starting...
+// Email: What do you think of this song?
+// SMS: this song slaps hard
+// SMS: yooo hoooo
+// Email: I hate this band
+// Email: Can you believe this song?
+// SMS: i'm a big fan
+// ===============================
