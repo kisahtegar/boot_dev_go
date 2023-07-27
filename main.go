@@ -1,46 +1,30 @@
 /*
  */
-// Channels : CLOSING CHANNELS IN GO
+// Channels : RANGE
 
-// [CLOSING CHANNELS IN GO]
-// Channels can be explicitly closed by a sender:
+// RANGE
+// Similar to slices and maps, channels can be ranged over.
 /*
-	ch := make(chan int)
-
-	// do some stuff with the channel
-	close(ch)
+	for item := range ch {
+		// item is the next value received from the channel
+	}
 */
 
-// [CHECKING IF A CHANNEL IS CLOSED]
-// Similar to the ok value when accessing data in a map, receivers can check the ok
-// value when receiving from a channel to test if a channel was closed.
-/*
-	v, ok := <-ch
-	// ok is false if the channel is empty and closed.
-*/
-
-// [DON'T SEND ON A CLOSED CHANNEL]
-// Sending on a closed channel will cause a panic. A panic on the main goroutine will
-// cause the entire program to crash, and a panic in any other goroutine will cause
-// that goroutine to crash.
-
-// Closing isn't necessary. There's nothing wrong with leaving channels open, they'll
-// still be garbage collected if they're unused. You should close channels to indicate
-// explicitly to a receiver that nothing else is going to come across.
+// This example will receive values over the channel (blocking at each iteration if
+// nothing new is there) and will exit only when the channel is closed.
 
 // ASSIGNMENT
-// At Mailio we're all about keeping track of what our systems are up to with great
-// logging and telemetry.
+// It's that time again, Mailio is hiring and we've been assigned to do the interview.
+// For some reason, the Fibonacci sequence is Mailio's interview problem of choice.
+// We've been tasked with building a small toy program we can use in the interview.
 
-// The sendReports function sends out a batch of reports to our clients and reports
-// back how many were sent across a channel. It closes the channel when it's done.
+// Complete the concurrrentFib function. It should:
 
-// Complete the countReports function. It should:
-
-// - Use an infinite for loop to read from the channel:
-// - If the channel is closed, break out of the loop
-// - Otherwise, keep a running total of the number of reports sent
-// - Return the total number of reports sent
+// Create a new channel of ints
+// Call fibonacci in a goroutine, passing it the channel and the number of Fibonacci
+// numbers to generate, n
+// Use a range loop to read from the channel and print out the numbers one by one,
+// each on a new line
 
 package main
 
@@ -49,76 +33,96 @@ import (
 	"time"
 )
 
-func countReports(numSentCh chan int) int {
-	total := 0
-	for {
-		numSent, ok := <-numSentCh
-		if !ok {
-			break
-		}
-		total += numSent
+func concurrrentFib(n int) {
+	chInts := make(chan int)
+	go func() {
+		fibonacci(n, chInts)
+	}()
+	for v := range chInts {
+		fmt.Println(v)
 	}
-	return total
 }
 
 // don't touch below this line
 
-func test(numBatches int) {
-	numSentCh := make(chan int)
-	go sendReports(numBatches, numSentCh)
-
-	fmt.Println("Start counting...")
-	numReports := countReports(numSentCh)
-	fmt.Printf("%v reports sent!\n", numReports)
-	fmt.Println("========================")
+func test(n int) {
+	fmt.Printf("Printing %v numbers...\n", n)
+	concurrrentFib(n)
+	fmt.Println("==============================")
 }
 
 func main() {
-	test(3)
-	test(4)
+	test(10)
 	test(5)
-	test(6)
+	test(20)
+	test(13)
 }
 
-func sendReports(numBatches int, ch chan int) {
-	for i := 0; i < numBatches; i++ {
-		numReports := i*23 + 32%17
-		ch <- numReports
-		fmt.Printf("Sent batch of %v reports\n", numReports)
-		time.Sleep(time.Millisecond * 100)
+func fibonacci(n int, ch chan int) {
+	x, y := 0, 1
+	for i := 0; i < n; i++ {
+		ch <- x
+		x, y = y, x+y
+		time.Sleep(time.Millisecond * 10)
 	}
-	close(ch)
+	close(ch) // close channel
 }
 
 // RESULTS:
 
-// Start counting...
-// Sent batch of 15 reports
-// Sent batch of 38 reports
-// Sent batch of 61 reports
-// 114 reports sent!
-// ========================
-// Start counting...
-// Sent batch of 15 reports
-// Sent batch of 38 reports
-// Sent batch of 61 reports
-// Sent batch of 84 reports
-// 198 reports sent!
-// ========================
-// Start counting...
-// Sent batch of 15 reports
-// Sent batch of 38 reports
-// Sent batch of 61 reports
-// Sent batch of 84 reports
-// Sent batch of 107 reports
-// 305 reports sent!
-// ========================
-// Start counting...
-// Sent batch of 15 reports
-// Sent batch of 38 reports
-// Sent batch of 61 reports
-// Sent batch of 84 reports
-// Sent batch of 107 reports
-// Sent batch of 130 reports
-// 435 reports sent!
-// ========================
+// Printing 10 numbers...
+// 0
+// 1
+// 1
+// 2
+// 3
+// 5
+// 8
+// 13
+// 21
+// 34
+// ==============================
+// Printing 5 numbers...
+// 0
+// 1
+// 1
+// 2
+// 3
+// ==============================
+// Printing 20 numbers...
+// 0
+// 1
+// 1
+// 2
+// 3
+// 5
+// 8
+// 13
+// 21
+// 34
+// 55
+// 89
+// 144
+// 233
+// 377
+// 610
+// 987
+// 1597
+// 2584
+// 4181
+// ==============================
+// Printing 13 numbers...
+// 0
+// 1
+// 1
+// 2
+// 3
+// 5
+// 8
+// 13
+// 21
+// 34
+// 55
+// 89
+// 144
+// ==============================
