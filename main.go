@@ -1,81 +1,124 @@
 /*
  */
-// Channels : BUFFERED CHANNELS
+// Channels : CLOSING CHANNELS IN GO
 
-// [BUFFERED CHANNELS]
-// Channels can optionally be buffered.
+// [CLOSING CHANNELS IN GO]
+// Channels can be explicitly closed by a sender:
+/*
+	ch := make(chan int)
 
-// [CREATING A CHANNEL WITH A BUFFER]
-// You can provide a buffer length as the second argument to make() to create a
-// buffered channel:
+	// do some stuff with the channel
+	close(ch)
+*/
 
-// ch := make(chan int, 100)
-// Sending on a buffered channel only blocks when the buffer is full.
+// [CHECKING IF A CHANNEL IS CLOSED]
+// Similar to the ok value when accessing data in a map, receivers can check the ok
+// value when receiving from a channel to test if a channel was closed.
+/*
+	v, ok := <-ch
+	// ok is false if the channel is empty and closed.
+*/
 
-// Receiving blocks only when the buffer is empty.
+// [DON'T SEND ON A CLOSED CHANNEL]
+// Sending on a closed channel will cause a panic. A panic on the main goroutine will
+// cause the entire program to crash, and a panic in any other goroutine will cause
+// that goroutine to crash.
+
+// Closing isn't necessary. There's nothing wrong with leaving channels open, they'll
+// still be garbage collected if they're unused. You should close channels to indicate
+// explicitly to a receiver that nothing else is going to come across.
 
 // ASSIGNMENT
-// We want to be able to send emails in batches. A writing goroutine will write an
-// entire batch of email messages to a buffered channel, and later, once the channel
-// is full, a reading goroutine will read all of the messages from the channel and
-// send them out to our clients.
+// At Mailio we're all about keeping track of what our systems are up to with great
+// logging and telemetry.
 
-// Complete the addEmailsToQueue function. It should create a buffered channel with a
-// buffer large enough to store all of the emails it's given. It should then write the
-// emails to the channel in order, and finally return the channel.
+// The sendReports function sends out a batch of reports to our clients and reports
+// back how many were sent across a channel. It closes the channel when it's done.
+
+// Complete the countReports function. It should:
+
+// - Use an infinite for loop to read from the channel:
+// - If the channel is closed, break out of the loop
+// - Otherwise, keep a running total of the number of reports sent
+// - Return the total number of reports sent
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
-func addEmailsToQueue(emails []string) chan string {
-	emailsToSend := make(chan string, len(emails))
-	for _, email := range emails {
-		emailsToSend <- email
+func countReports(numSentCh chan int) int {
+	total := 0
+	for {
+		numSent, ok := <-numSentCh
+		if !ok {
+			break
+		}
+		total += numSent
 	}
-	return emailsToSend
+	return total
 }
 
-// TEST SUITE - Don't Touch Below This Line
+// don't touch below this line
 
-func sendEmails(batchSize int, ch chan string) {
-	for i := 0; i < batchSize; i++ {
-		email := <-ch
-		fmt.Println("Sending email:", email)
-	}
-}
+func test(numBatches int) {
+	numSentCh := make(chan int)
+	go sendReports(numBatches, numSentCh)
 
-func test(emails ...string) {
-	fmt.Printf("Adding %v emails to queue...\n", len(emails))
-	ch := addEmailsToQueue(emails)
-	fmt.Println("Sending emails...")
-	sendEmails(len(emails), ch)
-	fmt.Println("==========================================")
+	fmt.Println("Start counting...")
+	numReports := countReports(numSentCh)
+	fmt.Printf("%v reports sent!\n", numReports)
+	fmt.Println("========================")
 }
 
 func main() {
-	test("Hello John, tell Kathy I said hi", "Whazzup bruther")
-	test("I find that hard to believe.", "When? I don't know if I can", "What time are you thinking?")
-	test("She says hi!", "Yeah its tomorrow. So we're good.", "Cool see you then!", "Bye!")
+	test(3)
+	test(4)
+	test(5)
+	test(6)
+}
+
+func sendReports(numBatches int, ch chan int) {
+	for i := 0; i < numBatches; i++ {
+		numReports := i*23 + 32%17
+		ch <- numReports
+		fmt.Printf("Sent batch of %v reports\n", numReports)
+		time.Sleep(time.Millisecond * 100)
+	}
+	close(ch)
 }
 
 // RESULTS:
 
-// Adding 2 emails to queue...
-// Sending emails...
-// Sending email: Hello John, tell Kathy I said hi
-// Sending email: Whazzup bruther
-// ==========================================
-// Adding 3 emails to queue...
-// Sending emails...
-// Sending email: I find that hard to believe.
-// Sending email: When? I don't know if I can
-// Sending email: What time are you thinking?
-// ==========================================
-// Adding 4 emails to queue...
-// Sending emails...
-// Sending email: She says hi!
-// Sending email: Yeah its tomorrow. So we're good.
-// Sending email: Cool see you then!
-// Sending email: Bye!
-// ==========================================
+// Start counting...
+// Sent batch of 15 reports
+// Sent batch of 38 reports
+// Sent batch of 61 reports
+// 114 reports sent!
+// ========================
+// Start counting...
+// Sent batch of 15 reports
+// Sent batch of 38 reports
+// Sent batch of 61 reports
+// Sent batch of 84 reports
+// 198 reports sent!
+// ========================
+// Start counting...
+// Sent batch of 15 reports
+// Sent batch of 38 reports
+// Sent batch of 61 reports
+// Sent batch of 84 reports
+// Sent batch of 107 reports
+// 305 reports sent!
+// ========================
+// Start counting...
+// Sent batch of 15 reports
+// Sent batch of 38 reports
+// Sent batch of 61 reports
+// Sent batch of 84 reports
+// Sent batch of 107 reports
+// Sent batch of 130 reports
+// 435 reports sent!
+// ========================
